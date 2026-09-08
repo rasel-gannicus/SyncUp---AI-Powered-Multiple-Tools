@@ -9,7 +9,7 @@ import {
   Maximize2,
   FileImage,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/Components/ui/button";
 import { TaskAttachment, formatFileSize } from "./imageUtils";
 
 interface AttachmentViewerModalProps {
