@@ -24,12 +24,17 @@ import {
   CalendarDays,
   Copy,
   Flag,
+  FolderKanban,
+  Tag,
+  Settings2,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
 import { format, isToday, isTomorrow, isYesterday } from "date-fns";
 import { PriorityLevel, useAddTodolist } from "./hooks/useAddTodolist";
 import { TodoCalendar } from "./Calendar/TodoCalendar";
+import { ProjectAutocomplete } from "./Projects/ProjectAutocomplete";
+import { ProjectManagerModal } from "./Projects/ProjectManagerModal";
 
 export const PRIORITY_CONFIG: Record<
   PriorityLevel,
@@ -86,6 +91,9 @@ export type ActiveEntityFilter =
 export const TodoList = ({ user }: { user: any }) => {
   const [inputValue, setInputValue] = useState("");
   const [inputPriority, setInputPriority] = useState<PriorityLevel>("Medium");
+  const [inputProject, setInputProject] = useState("");
+  const [selectedProjectFilter, setSelectedProjectFilter] = useState<string>("all");
+  const [isProjectManagerOpen, setIsProjectManagerOpen] = useState(false);
   const [filter, setFilter] = useState<"all" | "active" | "completed">("all");
   const [entityFilter, setEntityFilter] = useState<ActiveEntityFilter>("total");
   const [filterMode, setFilterMode] = useState<"date" | "all">("date");
@@ -93,6 +101,7 @@ export const TodoList = ({ user }: { user: any }) => {
   const [editingId, setEditingId] = useState<any>(null);
   const [editingText, setEditingText] = useState("");
   const [editingPriority, setEditingPriority] = useState<PriorityLevel>("Medium");
+  const [editingProject, setEditingProject] = useState("");
   const [copiedId, setCopiedId] = useState<any>(null);
 
   const [deleteTodo] = useDeleteTodoMutation();
@@ -107,6 +116,31 @@ export const TodoList = ({ user }: { user: any }) => {
     setTodos(userData?.todos || []);
   }, [userData]);
 
+  // Extract all unique project names from active todos
+  const availableProjects = useMemo(() => {
+    const nonDeleted = todos?.filter((t: any) => !t?.isDeleted) || [];
+    const projectSet = new Set<string>();
+    nonDeleted.forEach((t: any) => {
+      if (t?.project && typeof t.project === "string" && t.project.trim()) {
+        projectSet.add(t.project.trim());
+      }
+    });
+    return Array.from(projectSet).sort();
+  }, [todos]);
+
+  // Map of project name to task count
+  const projectCounts = useMemo(() => {
+    const nonDeleted = todos?.filter((t: any) => !t?.isDeleted) || [];
+    const map: Record<string, number> = {};
+    nonDeleted.forEach((t: any) => {
+      if (t?.project && typeof t.project === "string" && t.project.trim()) {
+        const name = t.project.trim();
+        map[name] = (map[name] || 0) + 1;
+      }
+    });
+    return map;
+  }, [todos]);
+
   const handleAddTodo = useAddTodolist({
     user,
     inputValue,
@@ -114,6 +148,8 @@ export const TodoList = ({ user }: { user: any }) => {
     setInputValue,
     selectedDate,
     priority: inputPriority,
+    project: inputProject,
+    setProject: setInputProject,
   });
 
   // Helper to extract yyyy-MM-dd date key for internal filtering
@@ -367,12 +403,14 @@ export const TodoList = ({ user }: { user: any }) => {
     setEditingId(todo?.createdAt);
     setEditingText(todo?.text || "");
     setEditingPriority(normalizePriority(todo?.priority));
+    setEditingProject(todo?.project || "");
   };
 
   // Cancel editing
   const handleCancelEditing = () => {
     setEditingId(null);
     setEditingText("");
+    setEditingProject("");
   };
 
   // Finish editing todo
@@ -394,8 +432,13 @@ export const TodoList = ({ user }: { user: any }) => {
 
     const oldText = todos[todoIndex].text;
     const oldPriority = todos[todoIndex].priority || "Medium";
+    const oldProject = todos[todoIndex].project || "";
 
-    if (oldText === editingText.trim() && oldPriority === editingPriority) {
+    if (
+      oldText === editingText.trim() &&
+      oldPriority === editingPriority &&
+      oldProject === editingProject.trim()
+    ) {
       setEditingId(null);
       return;
     }
@@ -404,6 +447,7 @@ export const TodoList = ({ user }: { user: any }) => {
       ...todos[todoIndex],
       text: editingText.trim(),
       priority: editingPriority,
+      project: editingProject.trim(),
     };
     const toastId = toast.loading("Saving changes...");
 
@@ -419,6 +463,7 @@ export const TodoList = ({ user }: { user: any }) => {
           createdAt,
           text: editingText.trim(),
           priority: editingPriority,
+          project: editingProject.trim(),
           email: user.providerData[0]?.email || user?.email,
         },
       });
@@ -428,6 +473,7 @@ export const TodoList = ({ user }: { user: any }) => {
         const revertedTodos = [...todos];
         revertedTodos[todoIndex].text = oldText;
         revertedTodos[todoIndex].priority = oldPriority;
+        revertedTodos[todoIndex].project = oldProject;
         setTodos(revertedTodos);
       } else {
         toast.success("Todo updated successfully.");
@@ -437,6 +483,7 @@ export const TodoList = ({ user }: { user: any }) => {
       const revertedTodos = [...todos];
       revertedTodos[todoIndex].text = oldText;
       revertedTodos[todoIndex].priority = oldPriority;
+      revertedTodos[todoIndex].project = oldProject;
       setTodos(revertedTodos);
     } finally {
       toast.dismiss(toastId);
@@ -489,8 +536,19 @@ export const TodoList = ({ user }: { user: any }) => {
           )
         : nonDeletedTodos;
 
+    // Filter by Project if selected
+    const projectFiltered =
+      selectedProjectFilter === "all"
+        ? dateFiltered
+        : dateFiltered.filter(
+            (todo: any) =>
+              todo.project &&
+              typeof todo.project === "string" &&
+              todo.project.trim().toLowerCase() === selectedProjectFilter.toLowerCase()
+          );
+
     // Filter by entity selection or status filter
-    const entityFiltered = dateFiltered.filter((todo: any) => {
+    const entityFiltered = projectFiltered.filter((todo: any) => {
       if (entityFilter === "pending") return !todo.completed;
       if (entityFilter === "done") return todo.completed;
       if (
@@ -518,7 +576,16 @@ export const TodoList = ({ user }: { user: any }) => {
       }
       return a.completed ? 1 : -1;
     });
-  }, [todos, filterMode, selectedDateKey, filter, entityFilter, getTodoDateKey, getTodoTimestamp]);
+  }, [
+    todos,
+    filterMode,
+    selectedDateKey,
+    selectedProjectFilter,
+    filter,
+    entityFilter,
+    getTodoDateKey,
+    getTodoTimestamp,
+  ]);
 
   // Formatted date relative badge
   const getDateLabel = (date: Date) => {
@@ -786,7 +853,7 @@ export const TodoList = ({ user }: { user: any }) => {
             </div>
           </div>
 
-          {/* Add Task Input Form with Priority Selector */}
+          {/* Add Task Input Form with Priority & Project Selector */}
           <div className="space-y-3">
             <div className="flex gap-2">
               <div className="relative flex-grow">
@@ -814,32 +881,44 @@ export const TodoList = ({ user }: { user: any }) => {
               </Button>
             </div>
 
-            {/* Priority Selector & Scheduled Info Bar */}
+            {/* Priority & Project Selector & Scheduled Info Bar */}
             <div className="flex flex-wrap items-center justify-between gap-2.5 pt-1">
-              {/* Priority Selection Pills */}
-              <div className="flex items-center gap-1.5">
-                <span className="text-[11px] font-semibold text-gray-500 dark:text-gray-400 flex items-center gap-1 mr-0.5">
-                  <Flag className="w-3.5 h-3.5" /> Priority:
-                </span>
-                {priorityLevels.map((lvl) => {
-                  const cfg = PRIORITY_CONFIG[lvl];
-                  const isSelected = inputPriority === lvl;
-                  return (
-                    <button
-                      key={lvl}
-                      type="button"
-                      onClick={() => setInputPriority(lvl)}
-                      className={`text-xs px-2.5 py-1 rounded-lg font-semibold border transition-all duration-200 flex items-center gap-1.5 ${
-                        isSelected
-                          ? `${cfg.bg} ${cfg.text} ${cfg.border} ring-1 ring-current shadow-sm scale-105`
-                          : "bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700"
-                      }`}
-                    >
-                      <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
-                      {lvl}
-                    </button>
-                  );
-                })}
+              <div className="flex flex-wrap items-center gap-3">
+                {/* Priority Selection Pills */}
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[11px] font-semibold text-gray-500 dark:text-gray-400 flex items-center gap-1 mr-0.5">
+                    <Flag className="w-3.5 h-3.5" /> Priority:
+                  </span>
+                  {priorityLevels.map((lvl) => {
+                    const cfg = PRIORITY_CONFIG[lvl];
+                    const isSelected = inputPriority === lvl;
+                    return (
+                      <button
+                        key={lvl}
+                        type="button"
+                        onClick={() => setInputPriority(lvl)}
+                        className={`text-xs px-2.5 py-1 rounded-lg font-semibold border transition-all duration-200 flex items-center gap-1.5 ${
+                          isSelected
+                            ? `${cfg.bg} ${cfg.text} ${cfg.border} ring-1 ring-current shadow-sm scale-105`
+                            : "bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700"
+                        }`}
+                      >
+                        <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
+                        {lvl}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Project Autocomplete Input with Live Suggestions */}
+                <ProjectAutocomplete
+                  value={inputProject}
+                  onChange={setInputProject}
+                  availableProjects={availableProjects}
+                  projectCounts={projectCounts}
+                  onOpenManager={() => setIsProjectManagerOpen(true)}
+                  placeholder="Project (optional)"
+                />
               </div>
 
               {/* Scheduled Date Note */}
@@ -853,10 +932,112 @@ export const TodoList = ({ user }: { user: any }) => {
                 </span>
               </div>
             </div>
+
+            {/* Quick suggested project chips if available */}
+            {availableProjects.length > 0 && (
+              <div className="flex items-center gap-1.5 pt-0.5 overflow-x-auto text-[11px] scrollbar-none">
+                <span className="text-gray-400 flex items-center gap-1 whitespace-nowrap">
+                  <Tag className="w-3 h-3" /> Quick Project:
+                </span>
+                {availableProjects.slice(0, 5).map((proj) => (
+                  <button
+                    key={proj}
+                    type="button"
+                    onClick={() =>
+                      setInputProject((curr) =>
+                        curr.trim().toLowerCase() === proj.toLowerCase() ? "" : proj
+                      )
+                    }
+                    className={`px-2 py-0.5 rounded-md border transition-all whitespace-nowrap ${
+                      inputProject.trim().toLowerCase() === proj.toLowerCase()
+                        ? "bg-purple-500/20 text-purple-700 dark:text-purple-300 border-purple-500/50 font-semibold scale-105"
+                        : "bg-gray-50 dark:bg-gray-800/80 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:bg-purple-50 dark:hover:bg-purple-950/40"
+                    }`}
+                  >
+                    #{proj}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
-          {/* Filter Status Tabs & Active Entity Chip */}
-          <div className="flex flex-wrap items-center justify-between gap-2 pt-2">
+          {/* Project Filter Pills & Manage Button */}
+          {availableProjects.length > 0 && (
+            <div className="flex items-center gap-1.5 overflow-x-auto pt-1 pb-0.5 scrollbar-none border-t border-gray-100 dark:border-gray-700/40">
+              <span className="text-[11px] font-semibold text-gray-500 dark:text-gray-400 flex items-center gap-1 flex-shrink-0">
+                <FolderKanban className="w-3.5 h-3.5 text-purple-500" /> Projects:
+              </span>
+              <button
+                type="button"
+                onClick={() => setSelectedProjectFilter("all")}
+                className={`text-xs px-2.5 py-1 rounded-lg transition-all flex-shrink-0 ${
+                  selectedProjectFilter === "all"
+                    ? "bg-purple-600 text-white shadow-sm font-semibold"
+                    : "bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300"
+                }`}
+              >
+                All
+              </button>
+              {availableProjects.map((proj) => {
+                const count = (
+                  filterMode === "date"
+                    ? todos.filter(
+                        (t: any) =>
+                          !t?.isDeleted &&
+                          getTodoDateKey(t) === selectedDateKey &&
+                          t.project?.trim().toLowerCase() === proj.toLowerCase()
+                      )
+                    : todos.filter(
+                        (t: any) =>
+                          !t?.isDeleted &&
+                          t.project?.trim().toLowerCase() === proj.toLowerCase()
+                      )
+                ).length;
+
+                return (
+                  <button
+                    key={proj}
+                    type="button"
+                    onClick={() =>
+                      setSelectedProjectFilter((curr) =>
+                        curr.toLowerCase() === proj.toLowerCase() ? "all" : proj
+                      )
+                    }
+                    className={`text-xs px-2.5 py-1 rounded-lg transition-all flex items-center gap-1.5 flex-shrink-0 ${
+                      selectedProjectFilter.toLowerCase() === proj.toLowerCase()
+                        ? "bg-purple-600 text-white shadow-sm font-semibold ring-2 ring-purple-600/30"
+                        : "bg-purple-500/10 hover:bg-purple-500/20 text-purple-700 dark:text-purple-300 border border-purple-500/20"
+                    }`}
+                  >
+                    <span>{proj}</span>
+                    <span
+                      className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                        selectedProjectFilter.toLowerCase() === proj.toLowerCase()
+                          ? "bg-purple-800 text-white"
+                          : "bg-purple-500/20 text-purple-700 dark:text-purple-300"
+                      }`}
+                    >
+                      {count}
+                    </span>
+                  </button>
+                );
+              })}
+
+              {/* Manage Projects button */}
+              <button
+                type="button"
+                onClick={() => setIsProjectManagerOpen(true)}
+                className="text-xs px-2 py-1 rounded-lg text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-950/40 border border-dashed border-purple-300 dark:border-purple-700 flex items-center gap-1 transition-all flex-shrink-0 ml-auto"
+                title="Manage all projects (rename / delete)"
+              >
+                <Settings2 className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline font-medium">Manage</span>
+              </button>
+            </div>
+          )}
+
+          {/* Filter Status Tabs & Active Filter Chips */}
+          <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
             <div className="flex flex-wrap items-center gap-1.5">
               <Button
                 type="button"
@@ -909,12 +1090,26 @@ export const TodoList = ({ user }: { user: any }) => {
                     } ${
                       PRIORITY_CONFIG[entityFilter as PriorityLevel].border
                     }`}
-                    title="Click to clear filter"
+                    title="Click to clear priority filter"
                   >
                     <span>Priority: {entityFilter}</span>
                     <X className="w-3 h-3 hover:scale-125 transition-transform" />
                   </button>
                 )}
+
+              {/* Active Project Filter Tag */}
+              {selectedProjectFilter !== "all" && (
+                <button
+                  type="button"
+                  onClick={() => setSelectedProjectFilter("all")}
+                  className="text-xs px-2.5 py-1 rounded-lg font-bold border flex items-center gap-1.5 transition-all shadow-sm bg-purple-500/15 text-purple-700 dark:text-purple-300 border-purple-500/30"
+                  title="Click to clear project filter"
+                >
+                  <FolderKanban className="w-3 h-3" />
+                  <span>Project: {selectedProjectFilter}</span>
+                  <X className="w-3 h-3 hover:scale-125 transition-transform" />
+                </button>
+              )}
             </div>
 
             <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">
@@ -936,7 +1131,7 @@ export const TodoList = ({ user }: { user: any }) => {
                 </h4>
                 <p className="text-xs text-gray-500 dark:text-gray-400 max-w-sm mx-auto">
                   {filterMode === "date"
-                    ? `There are no ${filter !== "all" ? filter : ""} tasks scheduled for ${format(selectedDate, "dd-MM-yyyy")}.`
+                    ? `There are no ${filter !== "all" ? filter : ""} tasks ${selectedProjectFilter !== "all" ? `for project "${selectedProjectFilter}"` : ""} scheduled for ${format(selectedDate, "dd-MM-yyyy")}.`
                     : `No ${filter !== "all" ? filter : ""} tasks found in your list.`}
                 </p>
                 <button
@@ -1019,27 +1214,38 @@ export const TodoList = ({ user }: { user: any }) => {
                             <X className="w-4 h-4" />
                           </button>
                         </div>
-                        {/* Priority Selector while editing */}
-                        <div className="flex items-center gap-1.5 pt-1">
-                          <span className="text-[11px] font-medium text-gray-500">Priority:</span>
-                          {priorityLevels.map((lvl) => {
-                            const cfg = PRIORITY_CONFIG[lvl];
-                            const isSelected = editingPriority === lvl;
-                            return (
-                              <button
-                                key={lvl}
-                                type="button"
-                                onClick={() => setEditingPriority(lvl)}
-                                className={`text-[11px] px-2 py-0.5 rounded-md font-semibold border ${
-                                  isSelected
-                                    ? `${cfg.bg} ${cfg.text} ${cfg.border} ring-1 ring-current`
-                                    : "bg-gray-100 dark:bg-gray-800 text-gray-500 border-transparent"
-                                }`}
-                              >
-                                {lvl}
-                              </button>
-                            );
-                          })}
+                        {/* Priority & Project Selector while editing */}
+                        <div className="flex flex-wrap items-center gap-3 pt-1">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[11px] font-medium text-gray-500">Priority:</span>
+                            {priorityLevels.map((lvl) => {
+                              const cfg = PRIORITY_CONFIG[lvl];
+                              const isSelected = editingPriority === lvl;
+                              return (
+                                <button
+                                  key={lvl}
+                                  type="button"
+                                  onClick={() => setEditingPriority(lvl)}
+                                  className={`text-[11px] px-2 py-0.5 rounded-md font-semibold border ${
+                                    isSelected
+                                      ? `${cfg.bg} ${cfg.text} ${cfg.border} ring-1 ring-current`
+                                      : "bg-gray-100 dark:bg-gray-800 text-gray-500 border-transparent"
+                                  }`}
+                                >
+                                  {lvl}
+                                </button>
+                              );
+                            })}
+                          </div>
+                          <ProjectAutocomplete
+                            value={editingProject}
+                            onChange={setEditingProject}
+                            availableProjects={availableProjects}
+                            projectCounts={projectCounts}
+                            onOpenManager={() => setIsProjectManagerOpen(true)}
+                            placeholder="Project (optional)"
+                            inputClassName="h-7 w-36 dark:bg-gray-800"
+                          />
                         </div>
                       </div>
                     ) : (
@@ -1054,7 +1260,7 @@ export const TodoList = ({ user }: { user: any }) => {
                           {todo.text}
                         </span>
 
-                        {/* Badges: Priority + Date */}
+                        {/* Badges: Priority + Project + Date */}
                         <div className="flex flex-wrap items-center gap-2 mt-1.5">
                           {/* Interactive Priority Badge */}
                           <div className="relative group/priority">
@@ -1072,6 +1278,29 @@ export const TodoList = ({ user }: { user: any }) => {
                               <span>{priority}</span>
                             </button>
                           </div>
+
+                          {/* Project Badge */}
+                          {todo.project && typeof todo.project === "string" && todo.project.trim() && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSelectedProjectFilter((curr) =>
+                                  curr.toLowerCase() === todo.project.trim().toLowerCase()
+                                    ? "all"
+                                    : todo.project.trim()
+                                );
+                              }}
+                              title={`Filter by project: ${todo.project.trim()}`}
+                              className={`text-[11px] font-semibold px-2 py-0.5 rounded-md border flex items-center gap-1 transition-all hover:scale-105 ${
+                                selectedProjectFilter.toLowerCase() === todo.project.trim().toLowerCase()
+                                  ? "bg-purple-600 text-white border-purple-600 shadow-sm ring-1 ring-purple-600"
+                                  : "bg-purple-500/10 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300 border-purple-500/20 hover:bg-purple-500/20"
+                              }`}
+                            >
+                              <FolderKanban className="w-3 h-3" />
+                              <span>{todo.project.trim()}</span>
+                            </button>
+                          )}
 
                           {/* Date badge formatted as date-month-year (dd-MM-yyyy) */}
                           {(filterMode === "all" || todoDateStr !== selectedDateKey) && (
@@ -1126,6 +1355,18 @@ export const TodoList = ({ user }: { user: any }) => {
           </div>
         </div>
       </div>
+
+      {/* Project Manager Modal */}
+      <ProjectManagerModal
+        isOpen={isProjectManagerOpen}
+        onClose={() => setIsProjectManagerOpen(false)}
+        availableProjects={availableProjects}
+        todos={todos}
+        user={user}
+        setTodos={setTodos}
+        selectedProjectFilter={selectedProjectFilter}
+        setSelectedProjectFilter={setSelectedProjectFilter}
+      />
     </div>
   );
 };

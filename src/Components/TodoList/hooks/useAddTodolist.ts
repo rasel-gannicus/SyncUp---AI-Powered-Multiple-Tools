@@ -14,6 +14,8 @@ type Props = {
   setInputValue: Dispatch<SetStateAction<string>>;
   selectedDate?: Date;
   priority?: PriorityLevel;
+  project?: string;
+  setProject?: Dispatch<SetStateAction<string>>;
 };
 
 /**
@@ -30,6 +32,8 @@ export const useAddTodolist = ({
   setInputValue,
   selectedDate,
   priority = "Medium",
+  project = "",
+  setProject,
 }: Props) => {
   const [addTodo] = useAddTodoMutation();
 
@@ -41,10 +45,13 @@ export const useAddTodolist = ({
       ? format(selectedDate, "yyyy-MM-dd")
       : format(new Date(), "yyyy-MM-dd");
 
+    const projectTrimmed = project?.trim() || "";
+
     const newTodo = {
       text: inputValue.trim(),
       completed: false,
       priority: priority || "Medium",
+      project: projectTrimmed,
       createdAt: Date.now(),
       date: dateStr,
       email: user.providerData[0]?.email || user?.email,
@@ -55,6 +62,9 @@ export const useAddTodolist = ({
     // Optimistically add the new todo item to the list
     setTodos((prevTodos: any) => [...prevTodos, newTodo]);
     setInputValue("");
+    if (setProject) {
+      setProject("");
+    }
 
     try {
       const response: any = await addTodo({ todo: newTodo });
@@ -76,7 +86,7 @@ export const useAddTodolist = ({
     } finally {
       toast.dismiss(toastId);
     }
-  }, [inputValue, user, addTodo, selectedDate, priority, setInputValue, setTodos]);
+  }, [inputValue, user, addTodo, selectedDate, priority, project, setInputValue, setProject, setTodos]);
 
   return handleAddTodo;
 };
