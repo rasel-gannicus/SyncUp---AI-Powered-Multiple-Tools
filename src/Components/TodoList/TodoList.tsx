@@ -22,6 +22,7 @@ import {
   Clock,
   Sparkles,
   CalendarDays,
+  Copy,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
@@ -36,6 +37,7 @@ export const TodoList = ({ user }: { user: any }) => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [editingId, setEditingId] = useState<any>(null);
   const [editingText, setEditingText] = useState("");
+  const [copiedId, setCopiedId] = useState<any>(null);
 
   const [deleteTodo] = useDeleteTodoMutation();
   const [editTodo] = useEditTodoMutation();
@@ -113,6 +115,26 @@ export const TodoList = ({ user }: { user: any }) => {
 
     return { total, completed, pending, percentage };
   }, [todos, selectedDateKey, getTodoDateKey]);
+
+  // Statistics dynamically synced with active viewMode ("date" vs "all")
+  const activeStats = useMemo(() => {
+    const nonDeleted = todos?.filter((t: any) => !t?.isDeleted) || [];
+    const relevantTodos =
+      filterMode === "date"
+        ? nonDeleted.filter((t: any) => getTodoDateKey(t) === selectedDateKey)
+        : nonDeleted;
+
+    const total = relevantTodos.length;
+    const completed = relevantTodos.filter((t: any) => t.completed).length;
+    const pending = total - completed;
+    const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
+    const title =
+      filterMode === "date"
+        ? `Progress for ${format(selectedDate, "dd-MM-yyyy")}`
+        : "Progress for All Tasks";
+
+    return { total, completed, pending, percentage, title };
+  }, [todos, filterMode, selectedDateKey, selectedDate, getTodoDateKey]);
 
   // Handle toggling todo completion
   const handleToggleTodo = async (createdAt: string, isCompleted: boolean) => {
@@ -273,6 +295,21 @@ export const TodoList = ({ user }: { user: any }) => {
     }
   };
 
+  // Handle copying task text to clipboard
+  const handleCopyTodo = useCallback((todo: any) => {
+    if (!todo?.text) return;
+    try {
+      navigator.clipboard.writeText(todo.text);
+      setCopiedId(todo.createdAt);
+      toast.success("Task copied to clipboard! 📋");
+      setTimeout(() => {
+        setCopiedId((curr: any) => (curr === todo.createdAt ? null : curr));
+      }, 2000);
+    } catch {
+      toast.error("Failed to copy task.");
+    }
+  }, []);
+
   // Helper to get reliable numeric timestamp for sorting latest first
   const getTodoTimestamp = useCallback((todo: any): number => {
     if (todo?.createdAt) {
@@ -385,15 +422,15 @@ export const TodoList = ({ user }: { user: any }) => {
             todos={todos}
           />
 
-          {/* Date Summary Card */}
-          <div className="bg-white dark:bg-gray-800/90 backdrop-blur-sm rounded-2xl p-5 shadow-lg border border-gray-100 dark:border-gray-700/60">
+          {/* Progress Summary Card (Synced with Selected Date / All Tasks) */}
+          <div className="bg-white dark:bg-gray-800/90 backdrop-blur-sm rounded-2xl p-5 shadow-lg border border-gray-100 dark:border-gray-700/60 transition-all duration-300">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-bold text-gray-800 dark:text-gray-200 flex items-center gap-2">
                 <Sparkles className="w-4 h-4 text-teal-500 dark:text-orange-400" />
-                Progress for {format(selectedDate, "dd-MM-yyyy")}
+                {activeStats.title}
               </h3>
               <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-teal-50 dark:bg-orange-500/10 text-teal-700 dark:text-orange-400">
-                {selectedDateStats.percentage}% Done
+                {activeStats.percentage}% Done
               </span>
             </div>
 
@@ -401,7 +438,7 @@ export const TodoList = ({ user }: { user: any }) => {
             <div className="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-2.5 overflow-hidden mb-4">
               <div
                 className="bg-gradient-to-r from-teal-500 to-emerald-500 dark:from-orange-400 dark:to-amber-500 h-2.5 rounded-full transition-all duration-500"
-                style={{ width: `${selectedDateStats.percentage}%` }}
+                style={{ width: `${activeStats.percentage}%` }}
               />
             </div>
 
@@ -410,20 +447,20 @@ export const TodoList = ({ user }: { user: any }) => {
               <div className="p-2 rounded-xl bg-gray-50 dark:bg-gray-700/40">
                 <p className="text-[11px] text-gray-500 dark:text-gray-400">Total</p>
                 <p className="text-lg font-bold text-gray-800 dark:text-white">
-                  {selectedDateStats.total}
+                  {activeStats.total}
                 </p>
               </div>
               <div className="p-2 rounded-xl bg-amber-500/10 text-amber-600 dark:text-orange-400">
                 <p className="text-[11px] text-amber-700/80 dark:text-orange-300/80">
                   Pending
                 </p>
-                <p className="text-lg font-bold">{selectedDateStats.pending}</p>
+                <p className="text-lg font-bold">{activeStats.pending}</p>
               </div>
               <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
                 <p className="text-[11px] text-emerald-700/80 dark:text-emerald-300/80">
                   Done
                 </p>
-                <p className="text-lg font-bold">{selectedDateStats.completed}</p>
+                <p className="text-lg font-bold">{activeStats.completed}</p>
               </div>
             </div>
           </div>
@@ -675,13 +712,27 @@ export const TodoList = ({ user }: { user: any }) => {
                       </div>
                     )}
 
-                    {/* Action buttons (Edit & Delete) */}
+                    {/* Action buttons (Copy, Edit & Delete) */}
                     {!isEditing && (
                       <div className="flex items-center gap-1 opacity-90 sm:opacity-0 group-hover:opacity-100 transition-opacity">
                         <button
                           type="button"
+                          onClick={() => handleCopyTodo(todo)}
+                          aria-label="Copy task text"
+                          title={copiedId === todo.createdAt ? "Copied!" : "Copy task"}
+                          className="p-1.5 rounded-lg text-gray-400 hover:text-teal-600 hover:bg-teal-50 dark:hover:text-orange-400 dark:hover:bg-gray-800 transition-colors"
+                        >
+                          {copiedId === todo.createdAt ? (
+                            <Check className="w-4 h-4 text-emerald-500" />
+                          ) : (
+                            <Copy className="w-4 h-4" />
+                          )}
+                        </button>
+                        <button
+                          type="button"
                           onClick={() => handleStartEditing(todo)}
                           aria-label="Edit task"
+                          title="Edit task"
                           className="p-1.5 rounded-lg text-gray-400 hover:text-teal-600 hover:bg-teal-50 dark:hover:text-orange-400 dark:hover:bg-gray-800 transition-colors"
                         >
                           <Edit3 className="w-4 h-4" />
@@ -690,6 +741,7 @@ export const TodoList = ({ user }: { user: any }) => {
                           type="button"
                           onClick={() => handleDeleteTodo(todo.createdAt)}
                           aria-label="Delete task"
+                          title="Delete task"
                           className="p-1.5 rounded-lg text-gray-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:text-rose-400 dark:hover:bg-gray-800 transition-colors"
                         >
                           <Trash2 className="w-4 h-4" />
