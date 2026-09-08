@@ -232,7 +232,7 @@ export const TodoCalendar: React.FC<TodoCalendarProps> = ({
           </span>
         </div>
         <span className="font-medium text-teal-600 dark:text-orange-400">
-          {format(selectedDate, "EEE, MMM d")}
+          {format(selectedDate, "EEE, dd-MM-yyyy")}
         </span>
       </div>
     </div>

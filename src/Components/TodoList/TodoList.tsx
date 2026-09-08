@@ -57,7 +57,7 @@ export const TodoList = ({ user }: { user: any }) => {
     selectedDate,
   });
 
-  // Helper to extract yyyy-MM-dd date key for a todo
+  // Helper to extract yyyy-MM-dd date key for internal filtering
   const getTodoDateKey = useCallback((todo: any): string => {
     if (todo?.date) {
       return typeof todo.date === "string"
@@ -75,6 +75,24 @@ export const TodoList = ({ user }: { user: any }) => {
       }
     }
     return format(new Date(), "yyyy-MM-dd");
+  }, []);
+
+  // Helper to format date for display in date-month-year format (dd-MM-yyyy)
+  const formatDisplayDate = useCallback((dateVal: any): string => {
+    if (!dateVal) return "";
+    try {
+      if (typeof dateVal === "string" && /^\d{4}-\d{2}-\d{2}$/.test(dateVal)) {
+        const [year, month, day] = dateVal.split("-");
+        return `${day}-${month}-${year}`;
+      }
+      const d = new Date(Number(dateVal) || dateVal);
+      if (!isNaN(d.getTime())) {
+        return format(d, "dd-MM-yyyy");
+      }
+    } catch {
+      // fallback
+    }
+    return String(dateVal);
   }, []);
 
   const selectedDateKey = useMemo(
@@ -347,7 +365,7 @@ export const TodoList = ({ user }: { user: any }) => {
               </span>
             </div>
             <p className="text-sm font-bold text-gray-800 dark:text-gray-100">
-              {format(selectedDate, "MMMM d, yyyy")}
+              {format(selectedDate, "dd-MM-yyyy")}
             </p>
           </div>
         </div>
@@ -372,7 +390,7 @@ export const TodoList = ({ user }: { user: any }) => {
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-bold text-gray-800 dark:text-gray-200 flex items-center gap-2">
                 <Sparkles className="w-4 h-4 text-teal-500 dark:text-orange-400" />
-                Progress for {format(selectedDate, "MMM d")}
+                Progress for {format(selectedDate, "dd-MM-yyyy")}
               </h3>
               <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-teal-50 dark:bg-orange-500/10 text-teal-700 dark:text-orange-400">
                 {selectedDateStats.percentage}% Done
@@ -419,7 +437,7 @@ export const TodoList = ({ user }: { user: any }) => {
               <div className="flex items-center gap-2">
                 <h2 className="text-xl font-bold text-gray-900 dark:text-white tracking-tight">
                   {filterMode === "date"
-                    ? `Tasks for ${format(selectedDate, "MMMM d, yyyy")}`
+                    ? `Tasks for ${format(selectedDate, "dd-MM-yyyy")}`
                     : "All Scheduled Tasks"}
                 </h2>
               </div>
@@ -471,7 +489,7 @@ export const TodoList = ({ user }: { user: any }) => {
                       handleAddTodo();
                     }
                   }}
-                  placeholder={`Add task for ${format(selectedDate, "MMM d")}...`}
+                  placeholder={`Add task for ${format(selectedDate, "dd-MM-yyyy")}...`}
                   className="w-full pl-3.5 pr-4 py-2.5 rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900/70 focus:ring-2 focus:ring-teal-500 dark:focus:ring-orange-400"
                 />
               </div>
@@ -489,7 +507,7 @@ export const TodoList = ({ user }: { user: any }) => {
               <span>
                 Task will be scheduled for{" "}
                 <strong className="text-gray-700 dark:text-gray-200">
-                  {format(selectedDate, "EEEE, MMMM d, yyyy")}
+                  {format(selectedDate, "EEEE, dd-MM-yyyy")}
                 </strong>
               </span>
             </div>
@@ -555,7 +573,7 @@ export const TodoList = ({ user }: { user: any }) => {
                 </h4>
                 <p className="text-xs text-gray-500 dark:text-gray-400 max-w-sm mx-auto">
                   {filterMode === "date"
-                    ? `There are no ${filter !== "all" ? filter : ""} tasks scheduled for ${format(selectedDate, "MMMM d, yyyy")}.`
+                    ? `There are no ${filter !== "all" ? filter : ""} tasks scheduled for ${format(selectedDate, "dd-MM-yyyy")}.`
                     : `No ${filter !== "all" ? filter : ""} tasks found in your list.`}
                 </p>
                 <button
@@ -647,11 +665,11 @@ export const TodoList = ({ user }: { user: any }) => {
                           {todo.text}
                         </span>
 
-                        {/* Date badge when viewing all tasks or if different from selected date */}
+                        {/* Date badge formatted as date-month-year (dd-MM-yyyy) */}
                         {(filterMode === "all" || todoDateStr !== selectedDateKey) && (
                           <span className="text-[11px] text-teal-600 dark:text-orange-400 font-medium mt-1 flex items-center gap-1">
                             <CalendarIcon className="w-3 h-3" />
-                            {todoDateStr}
+                            {formatDisplayDate(todoDateStr)}
                           </span>
                         )}
                       </div>
