@@ -27,6 +27,7 @@ import {
   FolderKanban,
   Tag,
   Settings2,
+  FileText,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
@@ -35,6 +36,7 @@ import { PriorityLevel, useAddTodolist } from "./hooks/useAddTodolist";
 import { TodoCalendar } from "./Calendar/TodoCalendar";
 import { ProjectAutocomplete } from "./Projects/ProjectAutocomplete";
 import { ProjectManagerModal } from "./Projects/ProjectManagerModal";
+import { DailyReportModal } from "./Report/DailyReportModal";
 
 export const PRIORITY_CONFIG: Record<
   PriorityLevel,
@@ -94,6 +96,7 @@ export const TodoList = ({ user }: { user: any }) => {
   const [inputProject, setInputProject] = useState("");
   const [selectedProjectFilter, setSelectedProjectFilter] = useState<string>("all");
   const [isProjectManagerOpen, setIsProjectManagerOpen] = useState(false);
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [filter, setFilter] = useState<"all" | "active" | "completed">("all");
   const [entityFilter, setEntityFilter] = useState<ActiveEntityFilter>("total");
   const [filterMode, setFilterMode] = useState<"date" | "all">("date");
@@ -826,30 +829,43 @@ export const TodoList = ({ user }: { user: any }) => {
               </p>
             </div>
 
-            {/* View Mode Switcher: Selected Date vs All Tasks */}
-            <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-700/60 p-1 rounded-xl">
-              <button
+            {/* Actions: Create Daily Report + View Mode Switcher */}
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
                 type="button"
-                onClick={() => setFilterMode("date")}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                  filterMode === "date"
-                    ? "bg-white dark:bg-gray-800 text-teal-600 dark:text-orange-400 shadow-sm"
-                    : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
-                }`}
+                onClick={() => setIsReportModalOpen(true)}
+                className="bg-gradient-to-r from-teal-500 to-emerald-600 dark:from-orange-400 dark:to-amber-500 hover:opacity-90 text-white dark:text-gray-950 px-3 py-1.5 h-8 rounded-xl text-xs font-bold shadow-sm flex items-center gap-1.5 transition-all active:scale-95"
+                title="Create and copy daily report"
               >
-                Selected Date
-              </button>
-              <button
-                type="button"
-                onClick={() => setFilterMode("all")}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                  filterMode === "all"
-                    ? "bg-white dark:bg-gray-800 text-teal-600 dark:text-orange-400 shadow-sm"
-                    : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
-                }`}
-              >
-                All Tasks
-              </button>
+                <FileText className="w-3.5 h-3.5" />
+                <span>Create Daily Report</span>
+              </Button>
+
+              {/* View Mode Switcher: Selected Date vs All Tasks */}
+              <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-700/60 p-1 rounded-xl">
+                <button
+                  type="button"
+                  onClick={() => setFilterMode("date")}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                    filterMode === "date"
+                      ? "bg-white dark:bg-gray-800 text-teal-600 dark:text-orange-400 shadow-sm"
+                      : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                  }`}
+                >
+                  Selected Date
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFilterMode("all")}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                    filterMode === "all"
+                      ? "bg-white dark:bg-gray-800 text-teal-600 dark:text-orange-400 shadow-sm"
+                      : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                  }`}
+                >
+                  All Tasks
+                </button>
+              </div>
             </div>
           </div>
 
@@ -1366,6 +1382,15 @@ export const TodoList = ({ user }: { user: any }) => {
         setTodos={setTodos}
         selectedProjectFilter={selectedProjectFilter}
         setSelectedProjectFilter={setSelectedProjectFilter}
+      />
+
+      {/* Daily Report Generator Modal */}
+      <DailyReportModal
+        isOpen={isReportModalOpen}
+        onClose={() => setIsReportModalOpen(false)}
+        todos={todos}
+        selectedDate={selectedDate}
+        filterMode={filterMode}
       />
     </div>
   );
