@@ -97,6 +97,7 @@ export const TodoList = ({ user }: { user: any }) => {
   const [selectedProjectFilter, setSelectedProjectFilter] = useState<string>("all");
   const [isProjectManagerOpen, setIsProjectManagerOpen] = useState(false);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [reportInitialTab, setReportInitialTab] = useState<"daily" | "monthly">("daily");
   const [filter, setFilter] = useState<"all" | "active" | "completed">("all");
   const [entityFilter, setEntityFilter] = useState<ActiveEntityFilter>("total");
   const [filterMode, setFilterMode] = useState<"date" | "all">("date");
@@ -829,17 +830,35 @@ export const TodoList = ({ user }: { user: any }) => {
               </p>
             </div>
 
-            {/* Actions: Create Daily Report + View Mode Switcher */}
+            {/* Actions: Daily Report + Monthly Report + View Mode Switcher */}
             <div className="flex flex-wrap items-center gap-2">
-              <Button
-                type="button"
-                onClick={() => setIsReportModalOpen(true)}
-                className="bg-gradient-to-r from-teal-500 to-emerald-600 dark:from-orange-400 dark:to-amber-500 hover:opacity-90 text-white dark:text-gray-950 px-3 py-1.5 h-8 rounded-xl text-xs font-bold shadow-sm flex items-center gap-1.5 transition-all active:scale-95"
-                title="Create and copy daily report"
-              >
-                <FileText className="w-3.5 h-3.5" />
-                <span>Create Daily Report</span>
-              </Button>
+              <div className="flex items-center gap-1.5">
+                <Button
+                  type="button"
+                  onClick={() => {
+                    setReportInitialTab("daily");
+                    setIsReportModalOpen(true);
+                  }}
+                  className="bg-gradient-to-r from-teal-500 to-emerald-600 dark:from-orange-400 dark:to-amber-500 hover:opacity-90 text-white dark:text-gray-950 px-3 py-1.5 h-8 rounded-xl text-xs font-bold shadow-sm flex items-center gap-1.5 transition-all active:scale-95"
+                  title="Create and copy daily report"
+                >
+                  <FileText className="w-3.5 h-3.5" />
+                  <span>Daily Report</span>
+                </Button>
+
+                <Button
+                  type="button"
+                  onClick={() => {
+                    setReportInitialTab("monthly");
+                    setIsReportModalOpen(true);
+                  }}
+                  className="bg-gradient-to-r from-indigo-500 to-blue-600 dark:from-amber-400 dark:to-orange-500 hover:opacity-90 text-white dark:text-gray-950 px-3 py-1.5 h-8 rounded-xl text-xs font-bold shadow-sm flex items-center gap-1.5 transition-all active:scale-95"
+                  title="Create and copy monthly report"
+                >
+                  <CalendarDays className="w-3.5 h-3.5" />
+                  <span>Monthly Report</span>
+                </Button>
+              </div>
 
               {/* View Mode Switcher: Selected Date vs All Tasks */}
               <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-700/60 p-1 rounded-xl">
@@ -1384,13 +1403,14 @@ export const TodoList = ({ user }: { user: any }) => {
         setSelectedProjectFilter={setSelectedProjectFilter}
       />
 
-      {/* Daily Report Generator Modal */}
+      {/* Daily & Monthly Report Generator Modal */}
       <DailyReportModal
         isOpen={isReportModalOpen}
         onClose={() => setIsReportModalOpen(false)}
         todos={todos}
         selectedDate={selectedDate}
         filterMode={filterMode}
+        initialTab={reportInitialTab}
       />
     </div>
   );
