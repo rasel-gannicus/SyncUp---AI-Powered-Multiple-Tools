@@ -33,6 +33,10 @@ import {
   CheckSquare,
   Square,
   MinusSquare,
+  Paperclip,
+  Image as ImageIcon,
+  FileImage,
+  Loader2,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
@@ -43,6 +47,9 @@ import { ProjectAutocomplete } from "./Projects/ProjectAutocomplete";
 import { ProjectManagerModal } from "./Projects/ProjectManagerModal";
 import { DailyReportModal } from "./Report/DailyReportModal";
 import { BulkActionBar } from "./BulkActions/BulkActionBar";
+import { TaskAttachment, compressImageFile } from "./Attachments/imageUtils";
+import { AttachmentPreviewStrip } from "./Attachments/AttachmentPreviewStrip";
+import { AttachmentViewerModal } from "./Attachments/AttachmentViewerModal";
 
 export const PRIORITY_CONFIG: Record<
   PriorityLevel,
@@ -113,6 +120,15 @@ export const TodoList = ({ user }: { user: any }) => {
   const [editingText, setEditingText] = useState("");
   const [editingPriority, setEditingPriority] = useState<PriorityLevel>("Medium");
   const [editingProject, setEditingProject] = useState("");
+  const [inputAttachments, setInputAttachments] = useState<TaskAttachment[]>([]);
+  const [editingAttachments, setEditingAttachments] = useState<TaskAttachment[]>([]);
+  const [isProcessingImages, setIsProcessingImages] = useState(false);
+
+  // Lightbox Viewer state
+  const [viewerAttachments, setViewerAttachments] = useState<TaskAttachment[]>([]);
+  const [viewerIndex, setViewerIndex] = useState(0);
+  const [isViewerOpen, setIsViewerOpen] = useState(false);
+
   const [copiedId, setCopiedId] = useState<any>(null);
   const [selectedTodoIds, setSelectedTodoIds] = useState<string[]>([]);
 
@@ -165,6 +181,8 @@ export const TodoList = ({ user }: { user: any }) => {
     project: inputProject,
     setProject: setInputProject,
     completed: inputStatus === "Completed",
+    attachments: inputAttachments,
+    setAttachments: setInputAttachments,
   });
 
   // Helper to extract yyyy-MM-dd date key for internal filtering
@@ -413,12 +431,78 @@ export const TodoList = ({ user }: { user: any }) => {
     }
   };
 
+  // Open image in lightbox viewer
+  const handleOpenViewer = (attachments: TaskAttachment[], index = 0) => {
+    setViewerAttachments(attachments);
+    setViewerIndex(index);
+    setIsViewerOpen(true);
+  };
+
+  // Process and attach files
+  const handleAttachFiles = async (
+    files: FileList | File[],
+    isEditing = false
+  ) => {
+    if (!files || files.length === 0) return;
+    setIsProcessingImages(true);
+    const toastId = toast.loading("Processing image(s)...");
+
+    const newAttachments: TaskAttachment[] = [];
+    try {
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        if (file.type.startsWith("image/")) {
+          const compressed = await compressImageFile(file);
+          newAttachments.push(compressed);
+        }
+      }
+
+      if (newAttachments.length > 0) {
+        if (isEditing) {
+          setEditingAttachments((prev) => [...prev, ...newAttachments]);
+        } else {
+          setInputAttachments((prev) => [...prev, ...newAttachments]);
+        }
+        toast.success(`Attached ${newAttachments.length} image(s)! 📎`, {
+          id: toastId,
+        });
+      } else {
+        toast.error("Please select valid image files.", { id: toastId });
+      }
+    } catch (err) {
+      console.error("Error attaching image:", err);
+      toast.error("Failed to process image.", { id: toastId });
+    } finally {
+      setIsProcessingImages(false);
+    }
+  };
+
+  // Clipboard paste support (e.g. pasted screenshots)
+  const handleInputPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+
+    const imageFiles: File[] = [];
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].type.indexOf("image") !== -1) {
+        const file = items[i].getAsFile();
+        if (file) imageFiles.push(file);
+      }
+    }
+
+    if (imageFiles.length > 0) {
+      e.preventDefault();
+      handleAttachFiles(imageFiles, false);
+    }
+  };
+
   // Start editing mode
   const handleStartEditing = (todo: any) => {
     setEditingId(todo?.createdAt);
     setEditingText(todo?.text || "");
     setEditingPriority(normalizePriority(todo?.priority));
     setEditingProject(todo?.project || "");
+    setEditingAttachments(Array.isArray(todo?.attachments) ? todo.attachments : []);
   };
 
   // Cancel editing
@@ -426,6 +510,7 @@ export const TodoList = ({ user }: { user: any }) => {
     setEditingId(null);
     setEditingText("");
     setEditingProject("");
+    setEditingAttachments([]);
   };
 
   // Finish editing todo
@@ -448,11 +533,13 @@ export const TodoList = ({ user }: { user: any }) => {
     const oldText = todos[todoIndex].text;
     const oldPriority = todos[todoIndex].priority || "Medium";
     const oldProject = todos[todoIndex].project || "";
+    const oldAttachments = todos[todoIndex].attachments || [];
 
     if (
       oldText === editingText.trim() &&
       oldPriority === editingPriority &&
-      oldProject === editingProject.trim()
+      oldProject === editingProject.trim() &&
+      JSON.stringify(oldAttachments) === JSON.stringify(editingAttachments)
     ) {
       setEditingId(null);
       return;
@@ -463,6 +550,7 @@ export const TodoList = ({ user }: { user: any }) => {
       text: editingText.trim(),
       priority: editingPriority,
       project: editingProject.trim(),
+      attachments: editingAttachments,
     };
     const toastId = toast.loading("Saving changes...");
 
@@ -479,6 +567,7 @@ export const TodoList = ({ user }: { user: any }) => {
           text: editingText.trim(),
           priority: editingPriority,
           project: editingProject.trim(),
+          attachments: editingAttachments,
           email: user.providerData[0]?.email || user?.email,
         },
       });
@@ -489,6 +578,7 @@ export const TodoList = ({ user }: { user: any }) => {
         revertedTodos[todoIndex].text = oldText;
         revertedTodos[todoIndex].priority = oldPriority;
         revertedTodos[todoIndex].project = oldProject;
+        revertedTodos[todoIndex].attachments = oldAttachments;
         setTodos(revertedTodos);
       } else {
         toast.success("Todo updated successfully.");
@@ -499,6 +589,7 @@ export const TodoList = ({ user }: { user: any }) => {
       revertedTodos[todoIndex].text = oldText;
       revertedTodos[todoIndex].priority = oldPriority;
       revertedTodos[todoIndex].project = oldProject;
+      revertedTodos[todoIndex].attachments = oldAttachments;
       setTodos(revertedTodos);
     } finally {
       toast.dismiss(toastId);
@@ -1047,25 +1138,98 @@ export const TodoList = ({ user }: { user: any }) => {
                   type="text"
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
+                  onPaste={handleInputPaste}
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
                       e.preventDefault();
                       handleAddTodo();
                     }
                   }}
-                  placeholder={`Add task for ${format(selectedDate, "dd-MM-yyyy")}...`}
+                  placeholder={`Add task for ${format(selectedDate, "dd-MM-yyyy")}... (Paste screenshot Ctrl+V / Cmd+V)`}
                   className="w-full pl-3.5 pr-4 py-2.5 rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900/70 focus:ring-2 focus:ring-teal-500 dark:focus:ring-orange-400"
                 />
               </div>
+
+              {/* Hidden File Input for Task Attachments */}
+              <input
+                id="task-image-upload"
+                type="file"
+                accept="image/*"
+                multiple
+                className="hidden"
+                onChange={(e) => {
+                  if (e.target.files) {
+                    handleAttachFiles(e.target.files, false);
+                    e.target.value = "";
+                  }
+                }}
+              />
+
+              {/* Attach Image Button */}
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() =>
+                  document.getElementById("task-image-upload")?.click()
+                }
+                disabled={isProcessingImages}
+                className="px-3 rounded-xl border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 gap-1.5 shadow-xs"
+                title="Attach image or paste screenshot (Ctrl+V / Cmd+V)"
+              >
+                {isProcessingImages ? (
+                  <Loader2 className="w-4 h-4 animate-spin text-teal-600 dark:text-orange-400" />
+                ) : (
+                  <Paperclip className="w-4 h-4 text-teal-600 dark:text-orange-400" />
+                )}
+                <span className="hidden sm:inline text-xs font-semibold">
+                  {inputAttachments.length > 0
+                    ? `Attached (${inputAttachments.length})`
+                    : "Attach"}
+                </span>
+              </Button>
+
               <Button
                 type="button"
                 onClick={handleAddTodo}
-                className="bg-teal-500 hover:bg-teal-600 dark:bg-orange-400 dark:hover:bg-orange-500 text-white dark:text-gray-950 px-4 rounded-xl shadow-md transition-transform active:scale-95"
+                className="bg-teal-500 hover:bg-teal-600 dark:bg-orange-400 dark:hover:bg-orange-500 text-white dark:text-gray-950 px-4 rounded-xl shadow-md transition-transform active:scale-95 font-semibold"
               >
                 <Plus className="w-5 h-5 mr-1" />
                 <span className="hidden sm:inline font-semibold">Add</span>
               </Button>
             </div>
+
+            {/* Attached Images Thumbnail Preview Bar (before adding) */}
+            {inputAttachments.length > 0 && (
+              <div className="bg-gray-50/80 dark:bg-gray-900/50 p-2.5 rounded-2xl border border-gray-100 dark:border-gray-800">
+                <div className="flex items-center justify-between text-xs text-gray-500 mb-1 px-1">
+                  <span className="flex items-center gap-1 font-semibold text-gray-700 dark:text-gray-300">
+                    <Paperclip className="w-3.5 h-3.5 text-teal-600 dark:text-orange-400" />
+                    Attached Images ({inputAttachments.length}):
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setInputAttachments([])}
+                    className="text-[11px] text-rose-500 hover:text-rose-700 font-medium"
+                  >
+                    Clear all
+                  </button>
+                </div>
+                <AttachmentPreviewStrip
+                  attachments={inputAttachments}
+                  onRemove={(id) =>
+                    setInputAttachments((prev) =>
+                      prev.filter((a) => (a.id || a.url) !== id)
+                    )
+                  }
+                  onPreview={(att) => {
+                    const idx = inputAttachments.findIndex(
+                      (a) => (a.id || a.url) === (att.id || att.url)
+                    );
+                    handleOpenViewer(inputAttachments, idx >= 0 ? idx : 0);
+                  }}
+                />
+              </div>
+            )}
 
             {/* Priority & Status & Project Selector & Scheduled Info Bar */}
             <div className="flex flex-wrap items-center justify-between gap-2.5 pt-1">
@@ -1523,6 +1687,47 @@ export const TodoList = ({ user }: { user: any }) => {
                             inputClassName="h-7 w-36 dark:bg-gray-800"
                           />
                         </div>
+
+                        {/* Edit Mode Attachments */}
+                        <div className="pt-1.5 border-t border-gray-100 dark:border-gray-800">
+                          <div className="flex items-center justify-between gap-2 mb-1">
+                            <span className="text-[11px] font-semibold text-gray-500">
+                              Attachments ({editingAttachments.length}):
+                            </span>
+                            <label className="text-[11px] text-teal-600 dark:text-orange-400 font-semibold cursor-pointer hover:underline flex items-center gap-1">
+                              <Paperclip className="w-3 h-3" /> Add Image
+                              <input
+                                type="file"
+                                accept="image/*"
+                                multiple
+                                className="hidden"
+                                onChange={(e) => {
+                                  if (e.target.files) {
+                                    handleAttachFiles(e.target.files, true);
+                                    e.target.value = "";
+                                  }
+                                }}
+                              />
+                            </label>
+                          </div>
+                          <AttachmentPreviewStrip
+                            attachments={editingAttachments}
+                            onRemove={(id) =>
+                              setEditingAttachments((prev) =>
+                                prev.filter((a) => (a.id || a.url) !== id)
+                              )
+                            }
+                            onPreview={(att) => {
+                              const idx = editingAttachments.findIndex(
+                                (a) => (a.id || a.url) === (att.id || att.url)
+                              );
+                              handleOpenViewer(
+                                editingAttachments,
+                                idx >= 0 ? idx : 0
+                              );
+                            }}
+                          />
+                        </div>
                       </div>
                     ) : (
                       <div className="flex flex-col flex-grow min-w-0">
@@ -1586,6 +1791,54 @@ export const TodoList = ({ user }: { user: any }) => {
                             </span>
                           )}
                         </div>
+
+                        {/* Task Image Attachments Thumbnails */}
+                        {todo.attachments &&
+                          Array.isArray(todo.attachments) &&
+                          todo.attachments.length > 0 && (
+                            <div className="flex flex-wrap items-center gap-1.5 mt-2">
+                              {todo.attachments.slice(0, 4).map((att: any, idx: number) => (
+                                <div
+                                  key={att.id || idx}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleOpenViewer(todo.attachments, idx);
+                                  }}
+                                  className="relative group/att w-10 h-10 rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 cursor-pointer shadow-xs hover:scale-105 hover:border-teal-500/50 dark:hover:border-orange-400/50 transition-all flex-shrink-0"
+                                  title={`View image: ${att.name || "Attachment"}`}
+                                >
+                                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                                  <img
+                                    src={att.url}
+                                    alt={att.name || "Task image"}
+                                    className="w-full h-full object-cover"
+                                  />
+                                  {idx === 3 && todo.attachments.length > 4 && (
+                                    <div className="absolute inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center text-[10px] font-bold text-white">
+                                      +{todo.attachments.length - 3}
+                                    </div>
+                                  )}
+                                </div>
+                              ))}
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleOpenViewer(todo.attachments, 0);
+                                }}
+                                className="text-[11px] font-medium text-gray-500 dark:text-gray-400 hover:text-teal-600 dark:hover:text-orange-400 flex items-center gap-1 ml-1 cursor-pointer transition-colors"
+                                title="Click to view images"
+                              >
+                                <Paperclip className="w-3.5 h-3.5 text-teal-600 dark:text-orange-400" />
+                                <span>
+                                  {todo.attachments.length}{" "}
+                                  {todo.attachments.length === 1
+                                    ? "image"
+                                    : "images"}
+                                </span>
+                              </button>
+                            </div>
+                          )}
                       </div>
                     )}
 
@@ -1663,6 +1916,14 @@ export const TodoList = ({ user }: { user: any }) => {
         onBulkDelete={handleBulkDelete}
         onBulkToggleComplete={handleBulkToggleComplete}
         onClearSelection={handleClearSelection}
+      />
+
+      {/* Attachment Image Lightbox Viewer Modal */}
+      <AttachmentViewerModal
+        isOpen={isViewerOpen}
+        onClose={() => setIsViewerOpen(false)}
+        attachments={viewerAttachments}
+        initialIndex={viewerIndex}
       />
     </div>
   );

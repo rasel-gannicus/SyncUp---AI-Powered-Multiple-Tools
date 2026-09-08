@@ -4,6 +4,7 @@ import { toast } from "react-hot-toast";
 import { useAddTodoMutation } from "@/Redux/features/Todo List/todoApi";
 import { Dispatch, SetStateAction } from "react";
 import { format } from "date-fns";
+import { TaskAttachment } from "../Attachments/imageUtils";
 
 export type PriorityLevel = "Low" | "Medium" | "High" | "Urgent";
 export type TaskStatus = "Completed" | "Pending";
@@ -18,6 +19,8 @@ type Props = {
   project?: string;
   setProject?: Dispatch<SetStateAction<string>>;
   completed?: boolean;
+  attachments?: TaskAttachment[];
+  setAttachments?: Dispatch<SetStateAction<TaskAttachment[]>>;
 };
 
 /**
@@ -37,6 +40,8 @@ export const useAddTodolist = ({
   project = "",
   setProject,
   completed = true,
+  attachments = [],
+  setAttachments,
 }: Props) => {
   const [addTodo] = useAddTodoMutation();
 
@@ -50,12 +55,14 @@ export const useAddTodolist = ({
 
     const projectTrimmed = project?.trim() || "";
     const isCompleted = typeof completed === "boolean" ? completed : true;
+    const taskAttachments = Array.isArray(attachments) ? [...attachments] : [];
 
     const newTodo = {
       text: inputValue.trim(),
       completed: isCompleted,
       priority: priority || "Medium",
       project: projectTrimmed,
+      attachments: taskAttachments,
       createdAt: Date.now(),
       date: dateStr,
       email: user.providerData[0]?.email || user?.email,
@@ -68,6 +75,9 @@ export const useAddTodolist = ({
     setInputValue("");
     if (setProject) {
       setProject("");
+    }
+    if (setAttachments) {
+      setAttachments([]);
     }
 
     try {
@@ -98,8 +108,10 @@ export const useAddTodolist = ({
     priority,
     project,
     completed,
+    attachments,
     setInputValue,
     setProject,
+    setAttachments,
     setTodos,
   ]);
 
