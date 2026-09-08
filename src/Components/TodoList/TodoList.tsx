@@ -99,6 +99,7 @@ export type ActiveEntityFilter =
 export const TodoList = ({ user }: { user: any }) => {
   const [inputValue, setInputValue] = useState("");
   const [inputPriority, setInputPriority] = useState<PriorityLevel>("Medium");
+  const [inputStatus, setInputStatus] = useState<"Completed" | "Pending">("Completed");
   const [inputProject, setInputProject] = useState("");
   const [selectedProjectFilter, setSelectedProjectFilter] = useState<string>("all");
   const [isProjectManagerOpen, setIsProjectManagerOpen] = useState(false);
@@ -163,6 +164,7 @@ export const TodoList = ({ user }: { user: any }) => {
     priority: inputPriority,
     project: inputProject,
     setProject: setInputProject,
+    completed: inputStatus === "Completed",
   });
 
   // Helper to extract yyyy-MM-dd date key for internal filtering
@@ -1065,9 +1067,40 @@ export const TodoList = ({ user }: { user: any }) => {
               </Button>
             </div>
 
-            {/* Priority & Project Selector & Scheduled Info Bar */}
+            {/* Priority & Status & Project Selector & Scheduled Info Bar */}
             <div className="flex flex-wrap items-center justify-between gap-2.5 pt-1">
               <div className="flex flex-wrap items-center gap-3">
+                {/* Status Selection: Pending vs Completed (Default: Completed) */}
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[11px] font-semibold text-gray-500 dark:text-gray-400 flex items-center gap-1 mr-0.5">
+                    <CheckCircle2 className="w-3.5 h-3.5" /> Status:
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setInputStatus("Pending")}
+                    className={`text-xs px-2.5 py-1 rounded-lg font-semibold border transition-all duration-200 flex items-center gap-1.5 ${
+                      inputStatus === "Pending"
+                        ? "bg-amber-500/15 dark:bg-amber-500/25 text-amber-700 dark:text-amber-300 border-amber-500/40 ring-1 ring-amber-500/30 shadow-sm scale-105"
+                        : "bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700"
+                    }`}
+                  >
+                    <Circle className="w-3 h-3 text-amber-500 dark:text-amber-400" />
+                    <span>Pending</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setInputStatus("Completed")}
+                    className={`text-xs px-2.5 py-1 rounded-lg font-semibold border transition-all duration-200 flex items-center gap-1.5 ${
+                      inputStatus === "Completed"
+                        ? "bg-emerald-500/15 dark:bg-emerald-500/25 text-emerald-700 dark:text-emerald-300 border-emerald-500/40 ring-1 ring-emerald-500/30 shadow-sm scale-105"
+                        : "bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700"
+                    }`}
+                  >
+                    <CheckCircle2 className="w-3 h-3 text-emerald-500 dark:text-emerald-400" />
+                    <span>Completed</span>
+                  </button>
+                </div>
+
                 {/* Priority Selection Pills */}
                 <div className="flex items-center gap-1.5">
                   <span className="text-[11px] font-semibold text-gray-500 dark:text-gray-400 flex items-center gap-1 mr-0.5">

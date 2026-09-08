@@ -6,6 +6,7 @@ import { Dispatch, SetStateAction } from "react";
 import { format } from "date-fns";
 
 export type PriorityLevel = "Low" | "Medium" | "High" | "Urgent";
+export type TaskStatus = "Completed" | "Pending";
 
 type Props = {
   user: any;
@@ -16,6 +17,7 @@ type Props = {
   priority?: PriorityLevel;
   project?: string;
   setProject?: Dispatch<SetStateAction<string>>;
+  completed?: boolean;
 };
 
 /**
@@ -34,6 +36,7 @@ export const useAddTodolist = ({
   priority = "Medium",
   project = "",
   setProject,
+  completed = true,
 }: Props) => {
   const [addTodo] = useAddTodoMutation();
 
@@ -46,10 +49,11 @@ export const useAddTodolist = ({
       : format(new Date(), "yyyy-MM-dd");
 
     const projectTrimmed = project?.trim() || "";
+    const isCompleted = typeof completed === "boolean" ? completed : true;
 
     const newTodo = {
       text: inputValue.trim(),
-      completed: false,
+      completed: isCompleted,
       priority: priority || "Medium",
       project: projectTrimmed,
       createdAt: Date.now(),
@@ -86,8 +90,18 @@ export const useAddTodolist = ({
     } finally {
       toast.dismiss(toastId);
     }
-  }, [inputValue, user, addTodo, selectedDate, priority, project, setInputValue, setProject, setTodos]);
+  }, [
+    inputValue,
+    user,
+    addTodo,
+    selectedDate,
+    priority,
+    project,
+    completed,
+    setInputValue,
+    setProject,
+    setTodos,
+  ]);
 
   return handleAddTodo;
 };
-
