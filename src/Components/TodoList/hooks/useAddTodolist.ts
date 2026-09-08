@@ -3,12 +3,14 @@ import { validateUser } from "../functionalities";
 import { toast } from "react-hot-toast";
 import { useAddTodoMutation } from "@/Redux/features/Todo List/todoApi";
 import { Dispatch, SetStateAction } from "react";
+import { format } from "date-fns";
 
 type Props = {
   user: any;
   inputValue: string;
   setTodos: Dispatch<SetStateAction<any[]>>;
   setInputValue: Dispatch<SetStateAction<string>>;
+  selectedDate?: Date;
 };
 
 /**
@@ -18,25 +20,29 @@ type Props = {
  * kept in the list. If the request fails, the new todo item is removed from the
  * list.
  */
-
 export const useAddTodolist = ({
   user,
   inputValue,
   setTodos,
   setInputValue,
+  selectedDate,
 }: Props) => {
-    
   const [addTodo] = useAddTodoMutation();
 
   const handleAddTodo = useCallback(async () => {
     if (!validateUser(user)) return;
     if (!inputValue.trim()) return;
 
+    const dateStr = selectedDate
+      ? format(selectedDate, "yyyy-MM-dd")
+      : format(new Date(), "yyyy-MM-dd");
+
     const newTodo = {
-      text: inputValue,
+      text: inputValue.trim(),
       completed: false,
       createdAt: Date.now(),
-      email: user.providerData[0].email || user?.email,
+      date: dateStr,
+      email: user.providerData[0]?.email || user?.email,
     };
 
     const toastId = toast.loading("Adding todo...");
@@ -52,7 +58,7 @@ export const useAddTodolist = ({
         setTodos((prevTodos: any) =>
           prevTodos.filter((todo: any) => todo.createdAt !== newTodo.createdAt)
         );
-        toast.error(response.error.data.message || "Failed to add todo.");
+        toast.error(response.error.data?.message || "Failed to add todo.");
       } else {
         toast.success("Todo added successfully.");
       }
@@ -65,7 +71,8 @@ export const useAddTodolist = ({
     } finally {
       toast.dismiss(toastId);
     }
-  }, [inputValue, user, addTodo]);
+  }, [inputValue, user, addTodo, selectedDate, setInputValue, setTodos]);
 
   return handleAddTodo;
 };
+
