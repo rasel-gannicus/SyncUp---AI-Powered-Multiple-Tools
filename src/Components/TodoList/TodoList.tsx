@@ -23,20 +23,66 @@ import {
   Sparkles,
   CalendarDays,
   Copy,
+  Flag,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
 import { format, isToday, isTomorrow, isYesterday } from "date-fns";
-import { useAddTodolist } from "./hooks/useAddTodolist";
+import { PriorityLevel, useAddTodolist } from "./hooks/useAddTodolist";
 import { TodoCalendar } from "./Calendar/TodoCalendar";
+
+export const PRIORITY_CONFIG: Record<
+  PriorityLevel,
+  { label: PriorityLevel; bg: string; text: string; border: string; dot: string }
+> = {
+  Low: {
+    label: "Low",
+    bg: "bg-blue-500/10 dark:bg-blue-500/20",
+    text: "text-blue-600 dark:text-blue-400",
+    border: "border-blue-500/30",
+    dot: "bg-blue-500",
+  },
+  Medium: {
+    label: "Medium",
+    bg: "bg-teal-500/10 dark:bg-teal-500/20",
+    text: "text-teal-600 dark:text-teal-400",
+    border: "border-teal-500/30",
+    dot: "bg-teal-500",
+  },
+  High: {
+    label: "High",
+    bg: "bg-amber-500/10 dark:bg-amber-500/20",
+    text: "text-amber-600 dark:text-amber-400",
+    border: "border-amber-500/30",
+    dot: "bg-amber-500",
+  },
+  Urgent: {
+    label: "Urgent",
+    bg: "bg-rose-500/10 dark:bg-rose-500/20",
+    text: "text-rose-600 dark:text-rose-400",
+    border: "border-rose-500/30",
+    dot: "bg-rose-500",
+  },
+};
+
+export const normalizePriority = (priority: any): PriorityLevel => {
+  if (!priority) return "Medium";
+  const p = String(priority).toLowerCase();
+  if (p === "urgent") return "Urgent";
+  if (p === "high") return "High";
+  if (p === "low") return "Low";
+  return "Medium";
+};
 
 export const TodoList = ({ user }: { user: any }) => {
   const [inputValue, setInputValue] = useState("");
+  const [inputPriority, setInputPriority] = useState<PriorityLevel>("Medium");
   const [filter, setFilter] = useState<"all" | "active" | "completed">("all");
   const [filterMode, setFilterMode] = useState<"date" | "all">("date");
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [editingId, setEditingId] = useState<any>(null);
   const [editingText, setEditingText] = useState("");
+  const [editingPriority, setEditingPriority] = useState<PriorityLevel>("Medium");
   const [copiedId, setCopiedId] = useState<any>(null);
 
   const [deleteTodo] = useDeleteTodoMutation();
@@ -57,6 +103,7 @@ export const TodoList = ({ user }: { user: any }) => {
     setTodos,
     setInputValue,
     selectedDate,
+    priority: inputPriority,
   });
 
   // Helper to extract yyyy-MM-dd date key for internal filtering
@@ -185,6 +232,53 @@ export const TodoList = ({ user }: { user: any }) => {
     }
   };
 
+  // Handle changing priority on the fly
+  const handleChangePriority = async (createdAt: string, newPriority: PriorityLevel) => {
+    if (!user) {
+      toast.error("You need to login first to change priority.");
+      return;
+    }
+
+    const todoIndex = todos.findIndex(
+      (todo: any) => todo.createdAt === createdAt
+    );
+    if (todoIndex === -1) return;
+
+    const oldPriority = todos[todoIndex].priority || "Medium";
+    if (oldPriority === newPriority) return;
+
+    const updatedTodo = { ...todos[todoIndex], priority: newPriority };
+
+    // Optimistic update
+    const updatedTodos = [...todos];
+    updatedTodos[todoIndex] = updatedTodo;
+    setTodos(updatedTodos);
+
+    try {
+      const response: any = await editTodo({
+        todo: {
+          createdAt,
+          priority: newPriority,
+          email: user.providerData[0]?.email || user?.email,
+        },
+      });
+
+      if ("error" in response) {
+        toast.error(response.error.data?.message || "Failed to update priority.");
+        const revertedTodos = [...todos];
+        revertedTodos[todoIndex].priority = oldPriority;
+        setTodos(revertedTodos);
+      } else {
+        toast.success(`Priority updated to ${newPriority}`);
+      }
+    } catch {
+      toast.error("An unexpected error occurred while updating priority.");
+      const revertedTodos = [...todos];
+      revertedTodos[todoIndex].priority = oldPriority;
+      setTodos(revertedTodos);
+    }
+  };
+
   // Handle deleting a todo
   const handleDeleteTodo = async (createdAt: string) => {
     if (!user) {
@@ -229,6 +323,7 @@ export const TodoList = ({ user }: { user: any }) => {
   const handleStartEditing = (todo: any) => {
     setEditingId(todo?.createdAt);
     setEditingText(todo?.text || "");
+    setEditingPriority(normalizePriority(todo?.priority));
   };
 
   // Cancel editing
@@ -254,12 +349,19 @@ export const TodoList = ({ user }: { user: any }) => {
     );
     if (todoIndex === -1) return;
 
-    if (todos[todoIndex].text === editingText.trim()) {
+    const oldText = todos[todoIndex].text;
+    const oldPriority = todos[todoIndex].priority || "Medium";
+
+    if (oldText === editingText.trim() && oldPriority === editingPriority) {
       setEditingId(null);
       return;
     }
 
-    const updatedTodo = { ...todos[todoIndex], text: editingText.trim() };
+    const updatedTodo = {
+      ...todos[todoIndex],
+      text: editingText.trim(),
+      priority: editingPriority,
+    };
     const toastId = toast.loading("Saving changes...");
 
     // Optimistic update
@@ -273,6 +375,7 @@ export const TodoList = ({ user }: { user: any }) => {
         todo: {
           createdAt,
           text: editingText.trim(),
+          priority: editingPriority,
           email: user.providerData[0]?.email || user?.email,
         },
       });
@@ -280,7 +383,8 @@ export const TodoList = ({ user }: { user: any }) => {
       if ("error" in response) {
         toast.error(response.error.data?.message || "Failed to edit todo.");
         const revertedTodos = [...todos];
-        revertedTodos[todoIndex].text = todos[todoIndex].text;
+        revertedTodos[todoIndex].text = oldText;
+        revertedTodos[todoIndex].priority = oldPriority;
         setTodos(revertedTodos);
       } else {
         toast.success("Todo updated successfully.");
@@ -288,7 +392,8 @@ export const TodoList = ({ user }: { user: any }) => {
     } catch {
       toast.error("An unexpected error occurred while editing the todo.");
       const revertedTodos = [...todos];
-      revertedTodos[todoIndex].text = todos[todoIndex].text;
+      revertedTodos[todoIndex].text = oldText;
+      revertedTodos[todoIndex].priority = oldPriority;
       setTodos(revertedTodos);
     } finally {
       toast.dismiss(toastId);
@@ -370,6 +475,8 @@ export const TodoList = ({ user }: { user: any }) => {
     return format(date, "EEEE");
   };
 
+  const priorityLevels: PriorityLevel[] = ["Low", "Medium", "High", "Urgent"];
+
   return (
     <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-10 transition-colors">
       {/* Top Banner / Heading */}
@@ -384,7 +491,7 @@ export const TodoList = ({ user }: { user: any }) => {
             </h1>
           </div>
           <p className="text-sm text-gray-600 dark:text-gray-400">
-            Organize, schedule, and track your daily tasks by date with ease.
+            Organize, schedule, and prioritize your daily tasks with ease.
           </p>
         </div>
 
@@ -512,8 +619,8 @@ export const TodoList = ({ user }: { user: any }) => {
             </div>
           </div>
 
-          {/* Add Task Input Form */}
-          <div className="space-y-2">
+          {/* Add Task Input Form with Priority Selector */}
+          <div className="space-y-3">
             <div className="flex gap-2">
               <div className="relative flex-grow">
                 <Input
@@ -539,14 +646,45 @@ export const TodoList = ({ user }: { user: any }) => {
                 <span className="hidden sm:inline font-semibold">Add</span>
               </Button>
             </div>
-            <div className="flex items-center gap-1.5 text-[11px] text-gray-500 dark:text-gray-400 pl-1">
-              <Clock className="w-3.5 h-3.5 text-teal-600 dark:text-orange-400" />
-              <span>
-                Task will be scheduled for{" "}
-                <strong className="text-gray-700 dark:text-gray-200">
-                  {format(selectedDate, "EEEE, dd-MM-yyyy")}
-                </strong>
-              </span>
+
+            {/* Priority Selector & Scheduled Info Bar */}
+            <div className="flex flex-wrap items-center justify-between gap-2.5 pt-1">
+              {/* Priority Selection Pills */}
+              <div className="flex items-center gap-1.5">
+                <span className="text-[11px] font-semibold text-gray-500 dark:text-gray-400 flex items-center gap-1 mr-0.5">
+                  <Flag className="w-3.5 h-3.5" /> Priority:
+                </span>
+                {priorityLevels.map((lvl) => {
+                  const cfg = PRIORITY_CONFIG[lvl];
+                  const isSelected = inputPriority === lvl;
+                  return (
+                    <button
+                      key={lvl}
+                      type="button"
+                      onClick={() => setInputPriority(lvl)}
+                      className={`text-xs px-2.5 py-1 rounded-lg font-semibold border transition-all duration-200 flex items-center gap-1.5 ${
+                        isSelected
+                          ? `${cfg.bg} ${cfg.text} ${cfg.border} ring-1 ring-current shadow-sm scale-105`
+                          : "bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700"
+                      }`}
+                    >
+                      <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
+                      {lvl}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Scheduled Date Note */}
+              <div className="flex items-center gap-1.5 text-[11px] text-gray-500 dark:text-gray-400">
+                <Clock className="w-3.5 h-3.5 text-teal-600 dark:text-orange-400" />
+                <span>
+                  For{" "}
+                  <strong className="text-gray-700 dark:text-gray-200">
+                    {format(selectedDate, "dd-MM-yyyy")}
+                  </strong>
+                </span>
+              </div>
             </div>
           </div>
 
@@ -630,11 +768,13 @@ export const TodoList = ({ user }: { user: any }) => {
               filteredTodos.map((todo: any) => {
                 const isEditing = editingId === todo.createdAt;
                 const todoDateStr = getTodoDateKey(todo);
+                const priority = normalizePriority(todo.priority);
+                const priorityCfg = PRIORITY_CONFIG[priority];
 
                 return (
                   <div
                     key={todo.createdAt}
-                    className={`group flex items-center gap-3 p-3.5 rounded-2xl border transition-all duration-200 ${
+                    className={`group flex items-start sm:items-center gap-3 p-3.5 rounded-2xl border transition-all duration-200 ${
                       todo.completed
                         ? "bg-gray-50/80 dark:bg-gray-900/40 border-gray-100 dark:border-gray-800 opacity-80"
                         : "bg-white dark:bg-gray-900/70 border-gray-200/80 dark:border-gray-700/80 hover:border-teal-500/50 dark:hover:border-orange-400/50 shadow-sm"
@@ -646,7 +786,7 @@ export const TodoList = ({ user }: { user: any }) => {
                       onClick={() =>
                         handleToggleTodo(todo.createdAt, todo.completed)
                       }
-                      className="p-1 rounded-lg text-gray-400 hover:text-teal-500 dark:hover:text-orange-400 transition-colors focus:outline-none flex-shrink-0"
+                      className="p-1 mt-0.5 sm:mt-0 rounded-lg text-gray-400 hover:text-teal-500 dark:hover:text-orange-400 transition-colors focus:outline-none flex-shrink-0"
                     >
                       {todo.completed ? (
                         <CheckCircle2 className="w-5 h-5 text-emerald-500 dark:text-emerald-400" />
@@ -657,38 +797,62 @@ export const TodoList = ({ user }: { user: any }) => {
 
                     {/* Todo Text or Edit Input */}
                     {isEditing ? (
-                      <div className="flex items-center gap-2 flex-grow">
-                        <Input
-                          type="text"
-                          value={editingText}
-                          onChange={(e) => setEditingText(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") {
-                              e.preventDefault();
-                              handleFinishEditing(todo.createdAt);
-                            } else if (e.key === "Escape") {
-                              handleCancelEditing();
-                            }
-                          }}
-                          autoFocus
-                          className="h-9 py-1 px-2.5 text-sm rounded-lg"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => handleFinishEditing(todo.createdAt)}
-                          className="p-2 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white transition-colors"
-                          title="Save"
-                        >
-                          <Check className="w-4 h-4" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={handleCancelEditing}
-                          className="p-2 rounded-lg bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 text-gray-700 dark:text-gray-300 transition-colors"
-                          title="Cancel"
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
+                      <div className="flex flex-col gap-2 flex-grow">
+                        <div className="flex items-center gap-2">
+                          <Input
+                            type="text"
+                            value={editingText}
+                            onChange={(e) => setEditingText(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                e.preventDefault();
+                                handleFinishEditing(todo.createdAt);
+                              } else if (e.key === "Escape") {
+                                handleCancelEditing();
+                              }
+                            }}
+                            autoFocus
+                            className="h-9 py-1 px-2.5 text-sm rounded-lg"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => handleFinishEditing(todo.createdAt)}
+                            className="p-2 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white transition-colors flex-shrink-0"
+                            title="Save"
+                          >
+                            <Check className="w-4 h-4" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleCancelEditing}
+                            className="p-2 rounded-lg bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 text-gray-700 dark:text-gray-300 transition-colors flex-shrink-0"
+                            title="Cancel"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                        {/* Priority Selector while editing */}
+                        <div className="flex items-center gap-1.5 pt-1">
+                          <span className="text-[11px] font-medium text-gray-500">Priority:</span>
+                          {priorityLevels.map((lvl) => {
+                            const cfg = PRIORITY_CONFIG[lvl];
+                            const isSelected = editingPriority === lvl;
+                            return (
+                              <button
+                                key={lvl}
+                                type="button"
+                                onClick={() => setEditingPriority(lvl)}
+                                className={`text-[11px] px-2 py-0.5 rounded-md font-semibold border ${
+                                  isSelected
+                                    ? `${cfg.bg} ${cfg.text} ${cfg.border} ring-1 ring-current`
+                                    : "bg-gray-100 dark:bg-gray-800 text-gray-500 border-transparent"
+                                }`}
+                              >
+                                {lvl}
+                              </button>
+                            );
+                          })}
+                        </div>
                       </div>
                     ) : (
                       <div className="flex flex-col flex-grow min-w-0">
@@ -702,19 +866,39 @@ export const TodoList = ({ user }: { user: any }) => {
                           {todo.text}
                         </span>
 
-                        {/* Date badge formatted as date-month-year (dd-MM-yyyy) */}
-                        {(filterMode === "all" || todoDateStr !== selectedDateKey) && (
-                          <span className="text-[11px] text-teal-600 dark:text-orange-400 font-medium mt-1 flex items-center gap-1">
-                            <CalendarIcon className="w-3 h-3" />
-                            {formatDisplayDate(todoDateStr)}
-                          </span>
-                        )}
+                        {/* Badges: Priority + Date */}
+                        <div className="flex flex-wrap items-center gap-2 mt-1.5">
+                          {/* Interactive Priority Badge */}
+                          <div className="relative group/priority">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const currentIndex = priorityLevels.indexOf(priority);
+                                const nextIndex = (currentIndex + 1) % priorityLevels.length;
+                                handleChangePriority(todo.createdAt, priorityLevels[nextIndex]);
+                              }}
+                              title="Click to cycle priority"
+                              className={`text-[11px] font-semibold px-2 py-0.5 rounded-md border flex items-center gap-1.5 transition-all hover:scale-105 ${priorityCfg.bg} ${priorityCfg.text} ${priorityCfg.border}`}
+                            >
+                              <span className={`w-1.5 h-1.5 rounded-full ${priorityCfg.dot}`} />
+                              <span>{priority}</span>
+                            </button>
+                          </div>
+
+                          {/* Date badge formatted as date-month-year (dd-MM-yyyy) */}
+                          {(filterMode === "all" || todoDateStr !== selectedDateKey) && (
+                            <span className="text-[11px] text-teal-600 dark:text-orange-400 font-medium flex items-center gap-1">
+                              <CalendarIcon className="w-3 h-3" />
+                              {formatDisplayDate(todoDateStr)}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     )}
 
                     {/* Action buttons (Copy, Edit & Delete) */}
                     {!isEditing && (
-                      <div className="flex items-center gap-1 opacity-90 sm:opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="flex items-center gap-1 opacity-90 sm:opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
                         <button
                           type="button"
                           onClick={() => handleCopyTodo(todo)}
@@ -757,5 +941,6 @@ export const TodoList = ({ user }: { user: any }) => {
     </div>
   );
 };
+
 
 

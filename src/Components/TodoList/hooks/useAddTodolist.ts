@@ -5,12 +5,15 @@ import { useAddTodoMutation } from "@/Redux/features/Todo List/todoApi";
 import { Dispatch, SetStateAction } from "react";
 import { format } from "date-fns";
 
+export type PriorityLevel = "Low" | "Medium" | "High" | "Urgent";
+
 type Props = {
   user: any;
   inputValue: string;
   setTodos: Dispatch<SetStateAction<any[]>>;
   setInputValue: Dispatch<SetStateAction<string>>;
   selectedDate?: Date;
+  priority?: PriorityLevel;
 };
 
 /**
@@ -26,6 +29,7 @@ export const useAddTodolist = ({
   setTodos,
   setInputValue,
   selectedDate,
+  priority = "Medium",
 }: Props) => {
   const [addTodo] = useAddTodoMutation();
 
@@ -40,6 +44,7 @@ export const useAddTodolist = ({
     const newTodo = {
       text: inputValue.trim(),
       completed: false,
+      priority: priority || "Medium",
       createdAt: Date.now(),
       date: dateStr,
       email: user.providerData[0]?.email || user?.email,
@@ -71,7 +76,7 @@ export const useAddTodolist = ({
     } finally {
       toast.dismiss(toastId);
     }
-  }, [inputValue, user, addTodo, selectedDate, setInputValue, setTodos]);
+  }, [inputValue, user, addTodo, selectedDate, priority, setInputValue, setTodos]);
 
   return handleAddTodo;
 };
