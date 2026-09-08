@@ -74,10 +74,20 @@ export const normalizePriority = (priority: any): PriorityLevel => {
   return "Medium";
 };
 
+export type ActiveEntityFilter =
+  | "total"
+  | "pending"
+  | "done"
+  | "Urgent"
+  | "High"
+  | "Medium"
+  | "Low";
+
 export const TodoList = ({ user }: { user: any }) => {
   const [inputValue, setInputValue] = useState("");
   const [inputPriority, setInputPriority] = useState<PriorityLevel>("Medium");
   const [filter, setFilter] = useState<"all" | "active" | "completed">("all");
+  const [entityFilter, setEntityFilter] = useState<ActiveEntityFilter>("total");
   const [filterMode, setFilterMode] = useState<"date" | "all">("date");
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [editingId, setEditingId] = useState<any>(null);
@@ -180,8 +190,41 @@ export const TodoList = ({ user }: { user: any }) => {
         ? `Progress for ${format(selectedDate, "dd-MM-yyyy")}`
         : "Progress for All Tasks";
 
-    return { total, completed, pending, percentage, title };
+    const priorities: Record<PriorityLevel, number> = {
+      Urgent: 0,
+      High: 0,
+      Medium: 0,
+      Low: 0,
+    };
+
+    relevantTodos.forEach((t: any) => {
+      const p = normalizePriority(t.priority);
+      priorities[p] += 1;
+    });
+
+    return { total, completed, pending, percentage, title, priorities };
   }, [todos, filterMode, selectedDateKey, selectedDate, getTodoDateKey]);
+
+  // Handle clicking on progress bar entities
+  const handleSelectEntity = (entity: ActiveEntityFilter) => {
+    if (entity === entityFilter && entity !== "total") {
+      setEntityFilter("total");
+      setFilter("all");
+    } else {
+      setEntityFilter(entity);
+      if (entity === "total") setFilter("all");
+      else if (entity === "pending") setFilter("active");
+      else if (entity === "done") setFilter("completed");
+    }
+  };
+
+  // Handle changing status filter from tabs
+  const handleChangeFilter = (newFilter: "all" | "active" | "completed") => {
+    setFilter(newFilter);
+    if (newFilter === "all") setEntityFilter("total");
+    else if (newFilter === "active") setEntityFilter("pending");
+    else if (newFilter === "completed") setEntityFilter("done");
+  };
 
   // Handle toggling todo completion
   const handleToggleTodo = async (createdAt: string, isCompleted: boolean) => {
@@ -446,8 +489,18 @@ export const TodoList = ({ user }: { user: any }) => {
           )
         : nonDeletedTodos;
 
-    // Status filtering
-    const statusFiltered = dateFiltered.filter((todo: any) => {
+    // Filter by entity selection or status filter
+    const entityFiltered = dateFiltered.filter((todo: any) => {
+      if (entityFilter === "pending") return !todo.completed;
+      if (entityFilter === "done") return todo.completed;
+      if (
+        entityFilter === "Urgent" ||
+        entityFilter === "High" ||
+        entityFilter === "Medium" ||
+        entityFilter === "Low"
+      ) {
+        return normalizePriority(todo.priority) === entityFilter;
+      }
       switch (filter) {
         case "active":
           return !todo.completed;
@@ -459,13 +512,13 @@ export const TodoList = ({ user }: { user: any }) => {
     });
 
     // Sort: pending first, then latest first within each status group
-    return statusFiltered.sort((a: any, b: any) => {
+    return entityFiltered.sort((a: any, b: any) => {
       if (a.completed === b.completed) {
         return getTodoTimestamp(b) - getTodoTimestamp(a);
       }
       return a.completed ? 1 : -1;
     });
-  }, [todos, filterMode, selectedDateKey, filter, getTodoDateKey, getTodoTimestamp]);
+  }, [todos, filterMode, selectedDateKey, filter, entityFilter, getTodoDateKey, getTodoTimestamp]);
 
   // Formatted date relative badge
   const getDateLabel = (date: Date) => {
@@ -515,9 +568,166 @@ export const TodoList = ({ user }: { user: any }) => {
         </div>
       </div>
 
+      {/* Top Overview & Synced Progress Bar with Clickable Priorities */}
+      <div className="mb-8 bg-white dark:bg-gray-800/90 backdrop-blur-sm rounded-3xl p-5 sm:p-6 shadow-lg border border-gray-100 dark:border-gray-700/60 transition-all duration-300">
+        {/* Header Row: Title & Percentage */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+          <div className="flex items-center gap-2.5">
+            <div className="p-2 rounded-xl bg-teal-500/10 dark:bg-orange-500/10 text-teal-600 dark:text-orange-400">
+              <Sparkles className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-base sm:text-lg font-bold text-gray-800 dark:text-gray-100 tracking-tight">
+                {activeStats.title}
+              </h3>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                {activeStats.completed} of {activeStats.total} {activeStats.total === 1 ? "task" : "tasks"} completed
+                {entityFilter !== "total" && (
+                  <span className="ml-2 inline-flex items-center text-teal-600 dark:text-orange-400 font-semibold">
+                    • Filtered by: {entityFilter}
+                  </span>
+                )}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span className="text-xs sm:text-sm font-bold px-3 py-1.5 rounded-xl bg-teal-50 dark:bg-orange-500/10 text-teal-700 dark:text-orange-400 border border-teal-500/20 dark:border-orange-500/20 shadow-sm">
+              {activeStats.percentage}% Completed
+            </span>
+          </div>
+        </div>
+
+        {/* Full-width Animated Progress Bar */}
+        <div className="w-full bg-gray-100 dark:bg-gray-700/70 rounded-full h-3 overflow-hidden mb-5">
+          <div
+            className="bg-gradient-to-r from-teal-500 via-emerald-500 to-amber-500 dark:from-orange-400 dark:via-amber-400 dark:to-emerald-400 h-3 rounded-full transition-all duration-500 shadow-sm"
+            style={{ width: `${activeStats.percentage}%` }}
+          />
+        </div>
+
+        {/* Clickable Entities Row: Status Metrics + Priority Breakdown Entities */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2.5 pt-1">
+          {/* Total Tasks (Click to show all) */}
+          <button
+            type="button"
+            onClick={() => handleSelectEntity("total")}
+            title="Show all tasks"
+            className={`p-2.5 rounded-xl border transition-all duration-200 flex flex-col items-center justify-center text-center cursor-pointer hover:scale-[1.03] active:scale-95 ${
+              entityFilter === "total"
+                ? "bg-teal-500/15 dark:bg-orange-500/15 border-teal-500 dark:border-orange-400 ring-2 ring-teal-500/70 dark:ring-orange-400/70 shadow-sm scale-[1.03]"
+                : "bg-gray-50 dark:bg-gray-700/40 border-gray-100 dark:border-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700/70"
+            }`}
+          >
+            <span className="text-[11px] font-semibold text-gray-500 dark:text-gray-400">Total</span>
+            <span className="text-base font-extrabold text-gray-800 dark:text-white mt-0.5">
+              {activeStats.total}
+            </span>
+          </button>
+
+          {/* Pending Tasks (Click to filter pending) */}
+          <button
+            type="button"
+            onClick={() => handleSelectEntity("pending")}
+            title="Filter pending tasks"
+            className={`p-2.5 rounded-xl border transition-all duration-200 flex flex-col items-center justify-center text-center cursor-pointer hover:scale-[1.03] active:scale-95 text-amber-600 dark:text-orange-400 ${
+              entityFilter === "pending"
+                ? "bg-amber-500/25 border-amber-500 dark:border-orange-400 ring-2 ring-amber-500 dark:ring-orange-400 shadow-sm scale-[1.03] font-bold"
+                : "bg-amber-500/10 border-amber-500/20 hover:bg-amber-500/20"
+            }`}
+          >
+            <span className="text-[11px] font-semibold">Pending</span>
+            <span className="text-base font-extrabold mt-0.5">{activeStats.pending}</span>
+          </button>
+
+          {/* Done Tasks (Click to filter completed) */}
+          <button
+            type="button"
+            onClick={() => handleSelectEntity("done")}
+            title="Filter completed tasks"
+            className={`p-2.5 rounded-xl border transition-all duration-200 flex flex-col items-center justify-center text-center cursor-pointer hover:scale-[1.03] active:scale-95 text-emerald-600 dark:text-emerald-400 ${
+              entityFilter === "done"
+                ? "bg-emerald-500/25 border-emerald-500 dark:border-emerald-400 ring-2 ring-emerald-500 dark:ring-emerald-400 shadow-sm scale-[1.03] font-bold"
+                : "bg-emerald-500/10 border-emerald-500/20 hover:bg-emerald-500/20"
+            }`}
+          >
+            <span className="text-[11px] font-semibold">Done</span>
+            <span className="text-base font-extrabold mt-0.5">{activeStats.completed}</span>
+          </button>
+
+          {/* Urgent Priority Entity (Click to filter urgent) */}
+          <button
+            type="button"
+            onClick={() => handleSelectEntity("Urgent")}
+            title="Filter Urgent priority tasks"
+            className={`p-2.5 rounded-xl border transition-all duration-200 flex flex-col items-center justify-center text-center cursor-pointer hover:scale-[1.03] active:scale-95 text-rose-600 dark:text-rose-400 ${
+              entityFilter === "Urgent"
+                ? "bg-rose-500/25 border-rose-500 ring-2 ring-rose-500 shadow-md shadow-rose-500/20 scale-[1.03] font-bold"
+                : "bg-rose-500/10 border-rose-500/20 hover:bg-rose-500/20"
+            }`}
+          >
+            <span className="text-[11px] font-semibold flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-rose-500" /> Urgent
+            </span>
+            <span className="text-base font-extrabold mt-0.5">{activeStats.priorities.Urgent}</span>
+          </button>
+
+          {/* High Priority Entity (Click to filter high) */}
+          <button
+            type="button"
+            onClick={() => handleSelectEntity("High")}
+            title="Filter High priority tasks"
+            className={`p-2.5 rounded-xl border transition-all duration-200 flex flex-col items-center justify-center text-center cursor-pointer hover:scale-[1.03] active:scale-95 text-amber-600 dark:text-amber-400 ${
+              entityFilter === "High"
+                ? "bg-amber-500/25 border-amber-500 ring-2 ring-amber-500 shadow-md shadow-amber-500/20 scale-[1.03] font-bold"
+                : "bg-amber-500/10 border-amber-500/20 hover:bg-amber-500/20"
+            }`}
+          >
+            <span className="text-[11px] font-semibold flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-500" /> High
+            </span>
+            <span className="text-base font-extrabold mt-0.5">{activeStats.priorities.High}</span>
+          </button>
+
+          {/* Medium Priority Entity (Click to filter medium) */}
+          <button
+            type="button"
+            onClick={() => handleSelectEntity("Medium")}
+            title="Filter Medium priority tasks"
+            className={`p-2.5 rounded-xl border transition-all duration-200 flex flex-col items-center justify-center text-center cursor-pointer hover:scale-[1.03] active:scale-95 text-teal-600 dark:text-teal-400 ${
+              entityFilter === "Medium"
+                ? "bg-teal-500/25 border-teal-500 ring-2 ring-teal-500 shadow-md shadow-teal-500/20 scale-[1.03] font-bold"
+                : "bg-teal-500/10 border-teal-500/20 hover:bg-teal-500/20"
+            }`}
+          >
+            <span className="text-[11px] font-semibold flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-teal-500" /> Medium
+            </span>
+            <span className="text-base font-extrabold mt-0.5">{activeStats.priorities.Medium}</span>
+          </button>
+
+          {/* Low Priority Entity (Click to filter low) */}
+          <button
+            type="button"
+            onClick={() => handleSelectEntity("Low")}
+            title="Filter Low priority tasks"
+            className={`p-2.5 rounded-xl border transition-all duration-200 flex flex-col items-center justify-center text-center cursor-pointer hover:scale-[1.03] active:scale-95 text-blue-600 dark:text-blue-400 col-span-2 sm:col-span-1 ${
+              entityFilter === "Low"
+                ? "bg-blue-500/25 border-blue-500 ring-2 ring-blue-500 shadow-md shadow-blue-500/20 scale-[1.03] font-bold"
+                : "bg-blue-500/10 border-blue-500/20 hover:bg-blue-500/20"
+            }`}
+          >
+            <span className="text-[11px] font-semibold flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-blue-500" /> Low
+            </span>
+            <span className="text-base font-extrabold mt-0.5">{activeStats.priorities.Low}</span>
+          </button>
+        </div>
+      </div>
+
       {/* Main Content: 2-Column Responsive Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* Left Column: Calendar & Date Overview (5 Columns on Desktop) */}
+        {/* Left Column: Calendar (5 Columns on Desktop) */}
         <div className="lg:col-span-5 space-y-6">
           {/* Interactive Calendar */}
           <TodoCalendar
@@ -528,49 +738,6 @@ export const TodoList = ({ user }: { user: any }) => {
             }}
             todos={todos}
           />
-
-          {/* Progress Summary Card (Synced with Selected Date / All Tasks) */}
-          <div className="bg-white dark:bg-gray-800/90 backdrop-blur-sm rounded-2xl p-5 shadow-lg border border-gray-100 dark:border-gray-700/60 transition-all duration-300">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-bold text-gray-800 dark:text-gray-200 flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-teal-500 dark:text-orange-400" />
-                {activeStats.title}
-              </h3>
-              <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-teal-50 dark:bg-orange-500/10 text-teal-700 dark:text-orange-400">
-                {activeStats.percentage}% Done
-              </span>
-            </div>
-
-            {/* Progress Bar */}
-            <div className="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-2.5 overflow-hidden mb-4">
-              <div
-                className="bg-gradient-to-r from-teal-500 to-emerald-500 dark:from-orange-400 dark:to-amber-500 h-2.5 rounded-full transition-all duration-500"
-                style={{ width: `${activeStats.percentage}%` }}
-              />
-            </div>
-
-            {/* Quick Metrics */}
-            <div className="grid grid-cols-3 gap-2 text-center pt-2 border-t border-gray-100 dark:border-gray-700/50">
-              <div className="p-2 rounded-xl bg-gray-50 dark:bg-gray-700/40">
-                <p className="text-[11px] text-gray-500 dark:text-gray-400">Total</p>
-                <p className="text-lg font-bold text-gray-800 dark:text-white">
-                  {activeStats.total}
-                </p>
-              </div>
-              <div className="p-2 rounded-xl bg-amber-500/10 text-amber-600 dark:text-orange-400">
-                <p className="text-[11px] text-amber-700/80 dark:text-orange-300/80">
-                  Pending
-                </p>
-                <p className="text-lg font-bold">{activeStats.pending}</p>
-              </div>
-              <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-                <p className="text-[11px] text-emerald-700/80 dark:text-emerald-300/80">
-                  Done
-                </p>
-                <p className="text-lg font-bold">{activeStats.completed}</p>
-              </div>
-            </div>
-          </div>
         </div>
 
         {/* Right Column: Task Management & List (7 Columns on Desktop) */}
@@ -688,15 +855,15 @@ export const TodoList = ({ user }: { user: any }) => {
             </div>
           </div>
 
-          {/* Filter Status Tabs */}
-          <div className="flex items-center justify-between gap-2 pt-2">
-            <div className="flex items-center gap-1.5">
+          {/* Filter Status Tabs & Active Entity Chip */}
+          <div className="flex flex-wrap items-center justify-between gap-2 pt-2">
+            <div className="flex flex-wrap items-center gap-1.5">
               <Button
                 type="button"
                 size="sm"
-                onClick={() => setFilter("all")}
+                onClick={() => handleChangeFilter("all")}
                 className={`rounded-xl text-xs font-semibold px-3 py-1.5 h-8 transition-all ${
-                  filter === "all"
+                  filter === "all" && (entityFilter === "total" || entityFilter === "pending" || entityFilter === "done")
                     ? "bg-teal-500 hover:bg-teal-600 text-white dark:bg-orange-400 dark:hover:bg-orange-500 dark:text-gray-950 shadow-sm"
                     : "bg-gray-100 hover:bg-gray-200 text-gray-700 dark:bg-gray-700/60 dark:hover:bg-gray-700 dark:text-gray-300"
                 }`}
@@ -706,7 +873,7 @@ export const TodoList = ({ user }: { user: any }) => {
               <Button
                 type="button"
                 size="sm"
-                onClick={() => setFilter("active")}
+                onClick={() => handleChangeFilter("active")}
                 className={`rounded-xl text-xs font-semibold px-3 py-1.5 h-8 transition-all ${
                   filter === "active"
                     ? "bg-teal-500 hover:bg-teal-600 text-white dark:bg-orange-400 dark:hover:bg-orange-500 dark:text-gray-950 shadow-sm"
@@ -718,7 +885,7 @@ export const TodoList = ({ user }: { user: any }) => {
               <Button
                 type="button"
                 size="sm"
-                onClick={() => setFilter("completed")}
+                onClick={() => handleChangeFilter("completed")}
                 className={`rounded-xl text-xs font-semibold px-3 py-1.5 h-8 transition-all ${
                   filter === "completed"
                     ? "bg-teal-500 hover:bg-teal-600 text-white dark:bg-orange-400 dark:hover:bg-orange-500 dark:text-gray-950 shadow-sm"
@@ -727,6 +894,27 @@ export const TodoList = ({ user }: { user: any }) => {
               >
                 Completed
               </Button>
+
+              {/* Active Priority Filter Tag */}
+              {entityFilter !== "total" &&
+                entityFilter !== "pending" &&
+                entityFilter !== "done" && (
+                  <button
+                    type="button"
+                    onClick={() => handleSelectEntity("total")}
+                    className={`text-xs px-2.5 py-1 rounded-lg font-bold border flex items-center gap-1.5 transition-all shadow-sm ${
+                      PRIORITY_CONFIG[entityFilter as PriorityLevel].bg
+                    } ${
+                      PRIORITY_CONFIG[entityFilter as PriorityLevel].text
+                    } ${
+                      PRIORITY_CONFIG[entityFilter as PriorityLevel].border
+                    }`}
+                    title="Click to clear filter"
+                  >
+                    <span>Priority: {entityFilter}</span>
+                    <X className="w-3 h-3 hover:scale-125 transition-transform" />
+                  </button>
+                )}
             </div>
 
             <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">

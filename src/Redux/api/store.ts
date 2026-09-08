@@ -3,14 +3,15 @@ import { apiSlice } from "./apiSlice";
 import userReducer from "../features/user/userSlice";
 import promptReducer from '../features/PromptForAi/PromptAiSlice';
 import themeReducer from '../features/Darkmode/themeSlice'; 
-
+import sidebarReducer from '../features/Sidebar/sidebarSlice';
 
 export const store = configureStore({
   reducer: {
     [apiSlice.reducerPath]: apiSlice.reducer,
     user: userReducer,
     promptTextAi: promptReducer,
-    theme: themeReducer, 
+    theme: themeReducer,
+    sidebar: sidebarReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().concat(apiSlice.middleware),

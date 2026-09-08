@@ -1,16 +1,19 @@
 "use client";
 import { setTheme } from "@/Redux/features/Darkmode/themeSlice";
+import { initSidebar } from "@/Redux/features/Sidebar/sidebarSlice";
+import { useAppDispatch, useAppSelector } from "@/Redux/hooks";
 import Sidebar from "./Navbar/Sidebar";
 import Topbar from "./Navbar/Topbar";
 import { useEffect } from "react";
-import { useDispatch } from "react-redux";
 import { useSystemTheme } from "@/utils/Dark mode toggle/useSystemTheme";
 
 export function Wrapper({ children }: Readonly<{ children: React.ReactNode }>) {
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
+  const isSidebarOpen = useAppSelector((state) => state.sidebar?.isOpen ?? true);
 
   useEffect(() => {
-    const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | 'system' || 'system';
+    dispatch(initSidebar());
+    const savedTheme = (localStorage.getItem('theme') as 'light' | 'dark' | 'system') || 'system';
 
     if (savedTheme === 'system') {
       const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -24,9 +27,13 @@ export function Wrapper({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <div className="flex min-h-screen dark:bg-gray-900 w-full flex-col bg-muted/40">
       <Sidebar />
-      <div className="flex flex-col sm:gap-4 sm:pt-4 sm:pl-14">
+      <div
+        className={`flex flex-col sm:gap-4 sm:pt-4 transition-[padding] duration-300 ease-in-out ${
+          isSidebarOpen ? "sm:pl-20" : "sm:pl-0"
+        }`}
+      >
         <Topbar />
-        <main className="grid  bg-gray-100 dark:bg-gray-900 min-h-screen z-0">
+        <main className="grid bg-gray-100 dark:bg-gray-900 min-h-screen z-0">
           {children}
         </main>
       </div>
