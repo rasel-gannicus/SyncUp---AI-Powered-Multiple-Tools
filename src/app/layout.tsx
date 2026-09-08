@@ -3,8 +3,8 @@ import "./globals.css";
 import { Ubuntu } from "next/font/google";
 import { Toaster } from "react-hot-toast";
 import ReduxProvider from "@/Redux/Wrapper/ReduxProvider";
-import { Wrapper } from "@/components/Shared/Wrapper";
-import { AuthWrapper } from "@/components/Shared/AuthWrapper";
+import { Wrapper } from "@/Components/Shared/Wrapper";
+import { AuthWrapper } from "@/Components/Shared/AuthWrapper";
 import { Analytics } from "@vercel/analytics/react"
 
 export const metadata: Metadata = {

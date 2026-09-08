@@ -1,4 +1,4 @@
-import { Button } from '@/components/ui/button';
+import { Button } from '@/Components/ui/button';
 import { useAppDispatch, useAppSelector } from '@/Redux/hooks';
 import { Loader2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -10,13 +10,13 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "@/Components/ui/select";
 import {
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
-} from "@/components/ui/tabs";
+} from "@/Components/ui/tabs";
 import { useOpenRouterApi } from './AI_Api_calling/useOpenRouterApi';
 import AnalyzeCard from './Card/AnalyzeCard';
 import CheckGrammerCard from './Card/CheckGrammerCard';

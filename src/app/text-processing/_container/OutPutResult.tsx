@@ -1,5 +1,5 @@
 import { useAppSelector } from "@/Redux/hooks";
-import { Button } from '@/components/ui/button';
+import { Button } from '@/Components/ui/button';
 import { CheckCheck, Copy } from 'lucide-react';
 import { useState } from "react";
 import ReactMarkdown from 'react-markdown';

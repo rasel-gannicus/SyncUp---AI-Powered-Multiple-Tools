@@ -2,7 +2,7 @@ import habitImg from "@/assets/img/exercise.png";
 import financeImg from "@/assets/img/dollar.png";
 import todoImg from "@/assets/img/man shopping.png";
 import womanWithLaptop from "@/assets/img/woman with laptop.png";
-import { Skeleton } from "../../../components/ui/skeleton";
+import { Skeleton } from "@/Components/ui/skeleton";
 import Image from "next/image";
 
 export const HomePageLoading = () => {

@@ -1,8 +1,8 @@
 "use client" ;
 import { addUserToRedux } from "@/Redux/features/user/userSlice";
 import { useAppDispatch } from "@/Redux/hooks";
-import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader } from "@/components/ui/dialog";
+import { Button } from "@/Components/ui/button";
+import { Dialog, DialogContent, DialogHeader } from "@/Components/ui/dialog";
 import auth from "@/utils/firebase.init";
 import { useEffect } from "react";
 import { useSignOut } from "react-firebase-hooks/auth";

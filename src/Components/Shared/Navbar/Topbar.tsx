@@ -10,7 +10,7 @@ import { addUserLoading, addUserToRedux } from "@/Redux/features/user/userSlice"
 import { toggleSidebar } from "@/Redux/features/Sidebar/sidebarSlice";
 import { useAppDispatch, useAppSelector } from "@/Redux/hooks";
 import profileImg from "@/assets/img/profile icon (1).png";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/Components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,8 +18,8 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+} from "@/Components/ui/dropdown-menu";
+import { Sheet, SheetContent, SheetTrigger } from "@/Components/ui/sheet";
 import ThemeToggle from "@/utils/Dark mode toggle/ThemeToggle";
 import { HomePageLoading } from "@/utils/Loading Spinner/Loading Skeleton/Skeleton";
 import { DeleteConfirmationModal } from "@/utils/Modals/DeleteConfirmationModal";

@@ -1,6 +1,6 @@
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Alert, AlertDescription } from '@/Components/ui/alert';
+import { Button } from '@/Components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/Components/ui/card';
 import { RefreshCw, Search } from 'lucide-react';
 import OutPutResult from '../OutPutResult';
 import SelectAiModel from './components/SelectAiModel';

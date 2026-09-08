@@ -1,6 +1,6 @@
 "use client";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Button } from "@/Components/ui/button";
+import { Input } from "@/Components/ui/input";
 import { CustomLoadingSpinner } from "@/utils/Loading Spinner/Loading Skeleton/Skeleton";
 import { withAuthRedirect } from "@/utils/Route Protection/RouteProtection";
 import auth from "@/utils/firebase.init";

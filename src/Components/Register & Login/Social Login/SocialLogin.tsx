@@ -1,5 +1,5 @@
 import { useAddUserToDbMutation } from "@/Redux/features/user/userApi";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/Components/ui/button";
 import auth from "@/utils/firebase.init";
 import { Github } from "lucide-react";
 import { useEffect } from "react";

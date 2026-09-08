@@ -4,13 +4,13 @@ import { useDispatch, useSelector } from 'react-redux'
 import { RootState } from '@/Redux/api/store'
 import { setTheme } from '@/Redux/features/Darkmode/themeSlice'
 
-import { Button } from '@/components/ui/button'
+import { Button } from '@/Components/ui/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
+} from '@/Components/ui/dropdown-menu'
 
 const ThemeToggle = () => {
   const dispatch = useDispatch()

@@ -1,7 +1,7 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { Button } from "@/Components/ui/button";
+import { Card } from "@/Components/ui/card";
 import { CheckCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 

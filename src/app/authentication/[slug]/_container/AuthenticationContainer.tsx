@@ -1,7 +1,7 @@
 "use client";
-import Login from "@/components/Register & Login/Login/Login";
-import Register from "@/components/Register & Login/Register/Register";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import Login from "@/Components/Register & Login/Login/Login";
+import Register from "@/Components/Register & Login/Register/Register";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/Components/ui/tabs";
 import { useParams } from "next/navigation";
 import { useState } from "react";
 

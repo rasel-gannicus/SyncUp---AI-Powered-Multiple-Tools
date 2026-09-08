@@ -1,8 +1,8 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/Components/ui/button";
+import { Input } from "@/Components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/Components/ui/select";
 import { PlusCircle } from "lucide-react";
 import { Transaction } from "../FinanceTracker";
 

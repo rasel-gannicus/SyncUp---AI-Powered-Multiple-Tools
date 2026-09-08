@@ -1,5 +1,5 @@
 "use client";
-import { TodoList } from "@/components/TodoList/TodoList";
+import { TodoList } from "@/Components/TodoList/TodoList";
 import { useAuthState } from "@/utils/Route Protection/useAuthState";
 
 const TodoListPage = () => {

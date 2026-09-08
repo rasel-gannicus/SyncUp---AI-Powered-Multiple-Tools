@@ -1,4 +1,4 @@
-import TestPage from '@/components/TestPage';
+import TestPage from '@/Components/TestPage';
 import React from 'react';
 
 export default function page() {

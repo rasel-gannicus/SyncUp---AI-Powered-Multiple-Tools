@@ -1,4 +1,4 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/Components/ui/card";
 import { MoreVertical } from "lucide-react";
 import cardImg3 from "@/assets/img/cycle.png";
 import cardImg2 from "@/assets/img/rickshaw2.png";

@@ -8,7 +8,7 @@ import {
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@/components/ui/tooltip";
+} from "@/Components/ui/tooltip";
 import Link from "next/link";
 
 export const MiniMenuCardIcon = () => {

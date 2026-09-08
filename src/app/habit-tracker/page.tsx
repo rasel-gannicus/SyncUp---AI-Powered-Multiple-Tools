@@ -1,4 +1,4 @@
-import HabitTracker from '@/components/Habit Tracker/HabitTracker';
+import HabitTracker from '@/Components/Habit Tracker/HabitTracker';
 import React from 'react';
 
 const page = () => {

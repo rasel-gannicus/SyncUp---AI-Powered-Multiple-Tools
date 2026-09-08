@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { FolderKanban, Plus, X, Settings2, Check } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { Input } from "@/Components/ui/input";
 
 interface ProjectAutocompleteProps {
   value: string;

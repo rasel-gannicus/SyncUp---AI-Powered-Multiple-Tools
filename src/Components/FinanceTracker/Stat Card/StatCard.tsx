@@ -1,4 +1,4 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/Components/ui/card";
 import { NotepadLoading } from "@/utils/Loading Spinner/Loading Skeleton/Skeleton";
 import { ArrowDownRight, ArrowUpRight } from "lucide-react";
 

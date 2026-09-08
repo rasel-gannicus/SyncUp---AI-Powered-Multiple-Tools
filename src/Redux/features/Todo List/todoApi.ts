@@ -22,11 +22,31 @@ export const todoApi = apiSlice.injectEndpoints({
       invalidatesTags: ["user"],
     }),
 
+    // --- bulk delete todos
+    bulkDeleteTodos: builder.mutation({
+      query: (data) => ({
+        url: "/bulkDeleteTodos",
+        method: "POST",
+        body: data,
+      }),
+      invalidatesTags: ["user"],
+    }),
+
     // --- edit a todo
     editTodo: builder.mutation({
       query: (data) => ({
         url: "/editTodo",
         method: "PUT",
+        body: data,
+      }),
+      invalidatesTags: ["user"],
+    }),
+
+    // --- bulk update todos
+    bulkUpdateTodos: builder.mutation({
+      query: (data) => ({
+        url: "/bulkUpdateTodos",
+        method: "POST",
         body: data,
       }),
       invalidatesTags: ["user"],
@@ -57,7 +77,9 @@ export const todoApi = apiSlice.injectEndpoints({
 export const {
   useAddTodoMutation,
   useDeleteTodoMutation,
+  useBulkDeleteTodosMutation,
   useEditTodoMutation,
+  useBulkUpdateTodosMutation,
   useRenameProjectMutation,
   useDeleteProjectMutation,
 } = todoApi;

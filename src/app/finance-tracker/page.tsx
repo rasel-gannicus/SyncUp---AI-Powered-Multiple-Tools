@@ -1,5 +1,5 @@
 "use client" ; 
-import FinanceTracker from '@/components/FinanceTracker/FinanceTracker';
+import FinanceTracker from '@/Components/FinanceTracker/FinanceTracker';
 import React from 'react';
 
 const page = () => {

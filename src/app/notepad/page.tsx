@@ -1,5 +1,5 @@
 "use client";
-import NotePad from "../../components/Notepad/Notepad";
+import NotePad from "@/Components/Notepad/Notepad";
 import { HomePageLoading } from "@/utils/Loading Spinner/Loading Skeleton/Skeleton";
 import { useAuthState } from "@/utils/Route Protection/useAuthState";
 

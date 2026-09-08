@@ -1,10 +1,10 @@
 "use client";
 import { useState, useEffect } from "react";
 import "react-quill/dist/quill.snow.css";
-import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import QuillEditor from "@/components/Notepad/QuillEditor/QuillEditor";
+import { Button } from "@/Components/ui/button";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/Components/ui/dialog";
+import { Input } from "@/Components/ui/input";
+import QuillEditor from "@/Components/Notepad/QuillEditor/QuillEditor";
 
 const modules = {
   toolbar: [

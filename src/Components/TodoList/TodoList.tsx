@@ -3,11 +3,13 @@
 import {
   useAddTodoMutation,
   useDeleteTodoMutation,
+  useBulkDeleteTodosMutation,
   useEditTodoMutation,
+  useBulkUpdateTodosMutation,
 } from "@/Redux/features/Todo List/todoApi";
 import { useAppSelector } from "@/Redux/hooks";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Button } from "@/Components/ui/button";
+import { Input } from "@/Components/ui/input";
 import { HabitTrackerLoading } from "@/utils/Loading Spinner/Loading Skeleton/Skeleton";
 import {
   CheckCircle2,
@@ -28,6 +30,9 @@ import {
   Tag,
   Settings2,
   FileText,
+  CheckSquare,
+  Square,
+  MinusSquare,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
@@ -37,6 +42,7 @@ import { TodoCalendar } from "./Calendar/TodoCalendar";
 import { ProjectAutocomplete } from "./Projects/ProjectAutocomplete";
 import { ProjectManagerModal } from "./Projects/ProjectManagerModal";
 import { DailyReportModal } from "./Report/DailyReportModal";
+import { BulkActionBar } from "./BulkActions/BulkActionBar";
 
 export const PRIORITY_CONFIG: Record<
   PriorityLevel,
@@ -107,9 +113,12 @@ export const TodoList = ({ user }: { user: any }) => {
   const [editingPriority, setEditingPriority] = useState<PriorityLevel>("Medium");
   const [editingProject, setEditingProject] = useState("");
   const [copiedId, setCopiedId] = useState<any>(null);
+  const [selectedTodoIds, setSelectedTodoIds] = useState<string[]>([]);
 
   const [deleteTodo] = useDeleteTodoMutation();
+  const [bulkDeleteTodos] = useBulkDeleteTodosMutation();
   const [editTodo] = useEditTodoMutation();
+  const [bulkUpdateTodos] = useBulkUpdateTodosMutation();
 
   const userState = useAppSelector((state) => state.user);
   const userData = userState.user;
@@ -590,6 +599,146 @@ export const TodoList = ({ user }: { user: any }) => {
     getTodoDateKey,
     getTodoTimestamp,
   ]);
+
+  // Selection computed states
+  const allFilteredSelected = useMemo(() => {
+    return (
+      filteredTodos.length > 0 &&
+      filteredTodos.every((t: any) => selectedTodoIds.includes(t.createdAt))
+    );
+  }, [filteredTodos, selectedTodoIds]);
+
+  const someFilteredSelected = useMemo(() => {
+    return (
+      !allFilteredSelected &&
+      filteredTodos.some((t: any) => selectedTodoIds.includes(t.createdAt))
+    );
+  }, [allFilteredSelected, filteredTodos, selectedTodoIds]);
+
+  // Toggle single task selection
+  const handleToggleSelectTodo = (id: string) => {
+    setSelectedTodoIds((prev) =>
+      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
+    );
+  };
+
+  // Toggle select all visible/filtered tasks
+  const handleToggleSelectAll = () => {
+    if (allFilteredSelected) {
+      // Unselect all currently filtered tasks
+      const filteredIds = new Set(filteredTodos.map((t: any) => t.createdAt));
+      setSelectedTodoIds((prev) => prev.filter((id) => !filteredIds.has(id)));
+    } else {
+      // Add all currently filtered tasks to selection
+      const newSelected = new Set([
+        ...selectedTodoIds,
+        ...filteredTodos.map((t: any) => t.createdAt),
+      ]);
+      setSelectedTodoIds(Array.from(newSelected));
+    }
+  };
+
+  // Clear selection
+  const handleClearSelection = () => {
+    setSelectedTodoIds([]);
+  };
+
+  // Bulk Delete Handler
+  const handleBulkDelete = async () => {
+    if (selectedTodoIds.length === 0 || !user?.email) return;
+
+    const count = selectedTodoIds.length;
+    const idsToDelete = [...selectedTodoIds];
+    const userEmail = user.providerData?.[0]?.email || user?.email;
+
+    // Optimistic local state update
+    const previousTodos = [...todos];
+    setTodos((prev: any[]) =>
+      prev.filter((t: any) => !idsToDelete.includes(t.createdAt))
+    );
+    setSelectedTodoIds([]);
+
+    const toastId = toast.loading(
+      `Deleting ${count} task${count > 1 ? "s" : ""}...`
+    );
+
+    try {
+      const response: any = await bulkDeleteTodos({
+        email: userEmail,
+        createdAtList: idsToDelete,
+      });
+
+      if (response?.error) {
+        // Fallback parallel delete
+        await Promise.all(
+          idsToDelete.map((createdAt) =>
+            deleteTodo({ createdAt, email: userEmail })
+          )
+        );
+      }
+      toast.success(`Deleted ${count} task${count > 1 ? "s" : ""}! 🗑️`, {
+        id: toastId,
+      });
+    } catch (err) {
+      console.error("Error in bulk delete:", err);
+      setTodos(previousTodos);
+      toast.error("Failed to delete selected tasks.", { id: toastId });
+    }
+  };
+
+  // Bulk Complete / Incomplete Handler
+  const handleBulkToggleComplete = async (completed: boolean) => {
+    if (selectedTodoIds.length === 0 || !user?.email) return;
+
+    const count = selectedTodoIds.length;
+    const idsToUpdate = [...selectedTodoIds];
+    const userEmail = user.providerData?.[0]?.email || user?.email;
+
+    // Optimistic local state update
+    const previousTodos = [...todos];
+    setTodos((prev: any[]) =>
+      prev.map((t: any) =>
+        idsToUpdate.includes(t.createdAt) ? { ...t, completed } : t
+      )
+    );
+
+    const toastId = toast.loading(
+      `Marking ${count} task${count > 1 ? "s" : ""} as ${
+        completed ? "done" : "active"
+      }...`
+    );
+
+    try {
+      const response: any = await bulkUpdateTodos({
+        email: userEmail,
+        createdAtList: idsToUpdate,
+        updates: { completed },
+      });
+
+      if (response?.error) {
+        // Fallback parallel edit
+        await Promise.all(
+          idsToUpdate.map((createdAt) =>
+            editTodo({
+              createdAt,
+              email: userEmail,
+              completed,
+            })
+          )
+        );
+      }
+      toast.success(
+        `Marked ${count} task${count > 1 ? "s" : ""} as ${
+          completed ? "done" : "active"
+        }! ✨`,
+        { id: toastId }
+      );
+    } catch (err) {
+      console.error("Error in bulk update:", err);
+      setTodos(previousTodos);
+      toast.error("Failed to update selected tasks.", { id: toastId });
+    }
+  };
 
   // Formatted date relative badge
   const getDateLabel = (date: Date) => {
@@ -1147,9 +1296,35 @@ export const TodoList = ({ user }: { user: any }) => {
               )}
             </div>
 
-            <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">
-              Showing {filteredTodos.length} {filteredTodos.length === 1 ? "task" : "tasks"}
-            </span>
+            {/* Mark All / Unmark All toggle + Task counter */}
+            <div className="flex items-center gap-3">
+              {filteredTodos.length > 0 && (
+                <button
+                  type="button"
+                  onClick={handleToggleSelectAll}
+                  className="text-xs font-semibold text-gray-600 dark:text-gray-300 hover:text-teal-600 dark:hover:text-orange-400 flex items-center gap-1.5 transition-colors p-1 px-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
+                  title={
+                    allFilteredSelected
+                      ? "Unmark all tasks"
+                      : "Mark all tasks for bulk action"
+                  }
+                >
+                  {allFilteredSelected ? (
+                    <CheckSquare className="w-4 h-4 text-teal-600 dark:text-orange-400" />
+                  ) : someFilteredSelected ? (
+                    <MinusSquare className="w-4 h-4 text-teal-600 dark:text-orange-400" />
+                  ) : (
+                    <Square className="w-4 h-4 text-gray-400" />
+                  )}
+                  <span>{allFilteredSelected ? "Unmark All" : "Mark All"}</span>
+                </button>
+              )}
+
+              <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">
+                Showing {filteredTodos.length}{" "}
+                {filteredTodos.length === 1 ? "task" : "tasks"}
+              </span>
+            </div>
           </div>
 
           {/* Tasks List */}
@@ -1188,23 +1363,56 @@ export const TodoList = ({ user }: { user: any }) => {
                 const todoDateStr = getTodoDateKey(todo);
                 const priority = normalizePriority(todo.priority);
                 const priorityCfg = PRIORITY_CONFIG[priority];
+                const isSelected = selectedTodoIds.includes(todo.createdAt);
 
                 return (
                   <div
                     key={todo.createdAt}
-                    className={`group flex items-start sm:items-center gap-3 p-3.5 rounded-2xl border transition-all duration-200 ${
-                      todo.completed
+                    className={`group flex items-start sm:items-center gap-2.5 sm:gap-3 p-3.5 rounded-2xl border transition-all duration-200 ${
+                      isSelected
+                        ? "bg-teal-500/10 dark:bg-orange-500/15 border-teal-500/60 dark:border-orange-400/60 ring-1 ring-teal-500/30 dark:ring-orange-400/30 shadow-sm"
+                        : todo.completed
                         ? "bg-gray-50/80 dark:bg-gray-900/40 border-gray-100 dark:border-gray-800 opacity-80"
                         : "bg-white dark:bg-gray-900/70 border-gray-200/80 dark:border-gray-700/80 hover:border-teal-500/50 dark:hover:border-orange-400/50 shadow-sm"
                     }`}
                   >
-                    {/* Checkbox Toggle Button */}
+                    {/* Mark / Select Checkbox for bulk actions */}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleToggleSelectTodo(todo.createdAt);
+                      }}
+                      className={`p-1 mt-0.5 sm:mt-0 rounded-lg transition-colors focus:outline-none flex-shrink-0 ${
+                        isSelected
+                          ? "text-teal-600 dark:text-orange-400"
+                          : "text-gray-300 dark:text-gray-600 hover:text-gray-500 dark:hover:text-gray-400"
+                      }`}
+                      title={
+                        isSelected
+                          ? "Unmark task"
+                          : "Mark task for bulk action"
+                      }
+                    >
+                      {isSelected ? (
+                        <CheckSquare className="w-4 h-4" />
+                      ) : (
+                        <Square className="w-4 h-4" />
+                      )}
+                    </button>
+
+                    {/* Status Checkbox Button */}
                     <button
                       type="button"
                       onClick={() =>
                         handleToggleTodo(todo.createdAt, todo.completed)
                       }
                       className="p-1 mt-0.5 sm:mt-0 rounded-lg text-gray-400 hover:text-teal-500 dark:hover:text-orange-400 transition-colors focus:outline-none flex-shrink-0"
+                      title={
+                        todo.completed
+                          ? "Mark as incomplete"
+                          : "Mark as completed"
+                      }
                     >
                       {todo.completed ? (
                         <CheckCircle2 className="w-5 h-5 text-emerald-500 dark:text-emerald-400" />
@@ -1411,6 +1619,17 @@ export const TodoList = ({ user }: { user: any }) => {
         selectedDate={selectedDate}
         filterMode={filterMode}
         initialTab={reportInitialTab}
+      />
+
+      {/* Floating Bulk Action Bar */}
+      <BulkActionBar
+        selectedCount={selectedTodoIds.length}
+        totalFilteredCount={filteredTodos.length}
+        allSelected={allFilteredSelected}
+        onToggleSelectAll={handleToggleSelectAll}
+        onBulkDelete={handleBulkDelete}
+        onBulkToggleComplete={handleBulkToggleComplete}
+        onClearSelection={handleClearSelection}
       />
     </div>
   );

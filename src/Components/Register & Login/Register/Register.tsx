@@ -1,8 +1,8 @@
 "use client";
 import { useAddUserToDbMutation } from "@/Redux/features/user/userApi";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Button } from "@/Components/ui/button";
+import { Input } from "@/Components/ui/input";
+import { Label } from "@/Components/ui/label";
 import { CustomLoadingSpinner } from "@/utils/Loading Spinner/Loading Skeleton/Skeleton";
 import auth from "@/utils/firebase.init";
 import Link from "next/link";

@@ -1,13 +1,13 @@
 "use client";
 import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/Components/ui/button";
 import {
   Card,
   CardContent,
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
+} from "@/Components/ui/card";
 import { PlusCircle, Edit, Trash2 } from "lucide-react";
 import {
   useAddNoteMutation,

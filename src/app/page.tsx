@@ -1,5 +1,5 @@
-import Banner from '@/components/Home Page/Banner';
-import HomePage from '@/components/Home Page/HomePage';
+import Banner from '@/Components/Home Page/Banner';
+import HomePage from '@/Components/Home Page/HomePage';
 import { Analytics } from '@vercel/analytics/react';
 import { useState } from 'react';
 

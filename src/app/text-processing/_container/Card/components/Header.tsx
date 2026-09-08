@@ -1,4 +1,4 @@
-import { CardHeader, CardTitle } from "@/components/ui/card";
+import { CardHeader, CardTitle } from "@/Components/ui/card";
 import SelectAiModel from "./SelectAiModel";
 
 export default function Header({headerText} : {headerText: string} ) {

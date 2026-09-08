@@ -7,7 +7,7 @@ import {
     SelectItem,
     SelectTrigger,
     SelectValue
-} from "@/components/ui/select";
+} from "@/Components/ui/select";
 import { selectAiModel } from '@/Redux/features/PromptForAi/PromptAiSlice';
 import { useAppDispatch, useAppSelector } from '@/Redux/hooks';
 import Image from 'next/image';
