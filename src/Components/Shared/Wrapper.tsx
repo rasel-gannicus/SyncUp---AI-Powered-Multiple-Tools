@@ -25,15 +25,15 @@ export function Wrapper({ children }: Readonly<{ children: React.ReactNode }>) {
   useSystemTheme();
 
   return (
-    <div className="flex min-h-screen dark:bg-gray-900 w-full flex-col bg-muted/40">
+    <div className="flex min-h-screen dark:bg-gray-900 w-full max-w-full flex-col bg-muted/40 overflow-x-hidden">
       <Sidebar />
       <div
-        className={`flex flex-col sm:gap-4 sm:pt-4 transition-[padding] duration-300 ease-in-out ${
+        className={`flex flex-col sm:gap-4 sm:pt-4 transition-[padding] duration-300 ease-in-out w-full max-w-full min-w-0 overflow-x-hidden ${
           isSidebarOpen ? "sm:pl-20" : "sm:pl-0"
         }`}
       >
         <Topbar />
-        <main className="grid bg-gray-100 dark:bg-gray-900 min-h-screen z-0">
+        <main className="grid bg-gray-100 dark:bg-gray-900 min-h-screen z-0 w-full max-w-full min-w-0">
           {children}
         </main>
       </div>

@@ -845,11 +845,11 @@ export const TodoList = ({ user }: { user: any }) => {
   const priorityLevels: PriorityLevel[] = ["Low", "Medium", "High", "Urgent"];
 
   return (
-    <div className="w-full max-w-6xl mx-auto px-3 sm:px-6 py-4 sm:py-10 transition-colors">
+    <div className="w-full max-w-6xl mx-auto px-3 sm:px-6 py-4 sm:py-10 transition-colors w-full min-w-0 max-w-full">
       {/* Top Row: Side-by-Side Hero Banner & Compact Calendar on Desktop */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6 mb-6 sm:mb-8 items-stretch">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6 mb-6 sm:mb-8 items-stretch w-full min-w-0">
         {/* Left: Hero Banner & Summary Info (7 Columns on Desktop) */}
-        <div className="lg:col-span-7 flex flex-col justify-between bg-gradient-to-br from-teal-500/10 via-emerald-500/5 to-teal-500/5 dark:from-orange-500/15 dark:via-amber-500/5 dark:to-orange-500/5 p-5 sm:p-7 rounded-2xl sm:rounded-3xl border border-teal-500/20 dark:border-orange-500/20 backdrop-blur-sm shadow-sm">
+        <div className="lg:col-span-7 flex flex-col justify-between bg-gradient-to-br from-teal-500/10 via-emerald-500/5 to-teal-500/5 dark:from-orange-500/15 dark:via-amber-500/5 dark:to-orange-500/5 p-4 sm:p-7 rounded-2xl sm:rounded-3xl border border-teal-500/20 dark:border-orange-500/20 backdrop-blur-sm shadow-sm min-w-0">
           <div>
             <div className="flex items-center gap-2.5 sm:gap-3 mb-2">
               <div className="p-2 sm:p-2.5 rounded-2xl bg-teal-500 text-white dark:bg-orange-400 dark:text-gray-950 shadow-md">
@@ -896,7 +896,7 @@ export const TodoList = ({ user }: { user: any }) => {
         </div>
 
         {/* Right: Interactive Compact Calendar (5 Columns on Desktop) */}
-        <div className="lg:col-span-5 w-full flex flex-col">
+        <div className="lg:col-span-5 w-full flex flex-col min-w-0">
           <TodoCalendar
             selectedDate={selectedDate}
             onSelectDate={(date) => {
@@ -910,9 +910,9 @@ export const TodoList = ({ user }: { user: any }) => {
       </div>
 
       {/* Row 2: Full-Width Task Management Workspace */}
-      <div className="w-full bg-white dark:bg-gray-800/90 backdrop-blur-sm rounded-2xl sm:rounded-3xl p-4 sm:p-7 shadow-lg border border-gray-100 dark:border-gray-700/60 space-y-5 sm:space-y-6">
+      <div className="w-full max-w-full min-w-0 bg-white dark:bg-gray-800/90 backdrop-blur-sm rounded-2xl sm:rounded-3xl p-3.5 sm:p-7 shadow-lg border border-gray-100 dark:border-gray-700/60 space-y-4 sm:space-y-6">
         {/* Header of Task Panel */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 sm:pb-4 border-b border-gray-100 dark:border-gray-700/50">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 sm:pb-4 border-b border-gray-100 dark:border-gray-700/50 min-w-0">
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white tracking-tight">
@@ -929,19 +929,19 @@ export const TodoList = ({ user }: { user: any }) => {
             </div>
 
             {/* Actions: Daily Report + Monthly Report + View Mode Switcher */}
-            <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full sm:w-auto">
-              <div className="grid grid-cols-2 sm:flex items-center gap-1.5 w-full sm:w-auto">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full sm:w-auto min-w-0">
+              <div className="grid grid-cols-2 sm:flex items-center gap-1.5 w-full sm:w-auto min-w-0">
                 <Button
                   type="button"
                   onClick={() => {
                     setReportInitialTab("daily");
                     setIsReportModalOpen(true);
                   }}
-                  className="bg-gradient-to-r from-teal-500 to-emerald-600 dark:from-orange-400 dark:to-amber-500 hover:opacity-90 text-white dark:text-gray-950 px-2.5 sm:px-3 py-1.5 h-8 rounded-xl text-xs font-bold shadow-sm flex items-center justify-center gap-1.5 transition-all active:scale-95"
+                  className="bg-gradient-to-r from-teal-500 to-emerald-600 dark:from-orange-400 dark:to-amber-500 hover:opacity-90 text-white dark:text-gray-950 px-2 sm:px-3 py-1.5 h-8 rounded-xl text-xs font-bold shadow-sm flex items-center justify-center gap-1 sm:gap-1.5 transition-all active:scale-95 min-w-0"
                   title="Create and copy daily report"
                 >
                   <FileText className="w-3.5 h-3.5 flex-shrink-0" />
-                  <span className="truncate">Daily Report</span>
+                  <span className="truncate text-[11px] sm:text-xs">Daily Report</span>
                 </Button>
 
                 <Button
@@ -950,20 +950,20 @@ export const TodoList = ({ user }: { user: any }) => {
                     setReportInitialTab("monthly");
                     setIsReportModalOpen(true);
                   }}
-                  className="bg-gradient-to-r from-indigo-500 to-blue-600 dark:from-amber-400 dark:to-orange-500 hover:opacity-90 text-white dark:text-gray-950 px-2.5 sm:px-3 py-1.5 h-8 rounded-xl text-xs font-bold shadow-sm flex items-center justify-center gap-1.5 transition-all active:scale-95"
+                  className="bg-gradient-to-r from-indigo-500 to-blue-600 dark:from-amber-400 dark:to-orange-500 hover:opacity-90 text-white dark:text-gray-950 px-2 sm:px-3 py-1.5 h-8 rounded-xl text-xs font-bold shadow-sm flex items-center justify-center gap-1 sm:gap-1.5 transition-all active:scale-95 min-w-0"
                   title="Create and copy monthly report"
                 >
                   <CalendarDays className="w-3.5 h-3.5 flex-shrink-0" />
-                  <span className="truncate">Monthly Report</span>
+                  <span className="truncate text-[11px] sm:text-xs">Monthly Report</span>
                 </Button>
               </div>
 
               {/* View Mode Switcher: Selected Date vs All Tasks */}
-              <div className="grid grid-cols-2 sm:flex items-center gap-1 bg-gray-100 dark:bg-gray-700/60 p-1 rounded-xl w-full sm:w-auto">
+              <div className="grid grid-cols-2 sm:flex items-center gap-1 bg-gray-100 dark:bg-gray-700/60 p-1 rounded-xl w-full sm:w-auto min-w-0">
                 <button
                   type="button"
                   onClick={() => setFilterMode("date")}
-                  className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition-all text-center ${
+                  className={`px-2 sm:px-3 py-1.5 rounded-lg text-[11px] sm:text-xs font-semibold transition-all text-center min-w-0 truncate ${
                     filterMode === "date"
                       ? "bg-white dark:bg-gray-800 text-teal-600 dark:text-orange-400 shadow-sm"
                       : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
@@ -974,7 +974,7 @@ export const TodoList = ({ user }: { user: any }) => {
                 <button
                   type="button"
                   onClick={() => setFilterMode("all")}
-                  className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition-all text-center ${
+                  className={`px-2 sm:px-3 py-1.5 rounded-lg text-[11px] sm:text-xs font-semibold transition-all text-center min-w-0 truncate ${
                     filterMode === "all"
                       ? "bg-white dark:bg-gray-800 text-teal-600 dark:text-orange-400 shadow-sm"
                       : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
@@ -1025,7 +1025,7 @@ export const TodoList = ({ user }: { user: any }) => {
             </div>
 
             {/* Clickable Entities Row: Status Metrics + Priority Breakdown Entities */}
-            <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-7 gap-1.5 sm:gap-2 pt-0.5">
+            <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-7 gap-1.5 sm:gap-2 pt-0.5 w-full min-w-0 max-w-full">
               {/* Total Tasks (Click to show all) */}
               <button
                 type="button"
@@ -1250,9 +1250,9 @@ export const TodoList = ({ user }: { user: any }) => {
             )}
 
             {/* Priority & Status & Project Selector & Scheduled Info Bar */}
-            <div className="flex flex-col gap-2.5 pt-1">
+            <div className="flex flex-col gap-2.5 pt-1 w-full min-w-0 max-w-full">
               {/* Status & Priority Row: Wraps gracefully on mobile */}
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-2 w-full min-w-0 max-w-full">
                 {/* Status Selection: Pending vs Completed (Default: Completed) */}
                 <div className="flex flex-wrap items-center gap-1 sm:gap-1.5">
                   <span className="text-[11px] font-semibold text-gray-500 dark:text-gray-400 flex items-center gap-1 mr-0.5">
@@ -1340,110 +1340,114 @@ export const TodoList = ({ user }: { user: any }) => {
 
             {/* Quick suggested project chips if available */}
             {availableProjects.length > 0 && (
-              <div className="flex items-center gap-1.5 sm:gap-2 pt-1 pb-0.5 overflow-x-auto scrollbar-none flex-nowrap">
-                <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 flex items-center gap-1.5 whitespace-nowrap flex-shrink-0">
-                  <Tag className="w-3.5 h-3.5 text-purple-500" /> Quick Project:
-                </span>
-                {availableProjects.slice(0, 8).map((proj) => {
-                  const isSelected = inputProject.trim().toLowerCase() === proj.toLowerCase();
-                  return (
-                    <button
-                      key={proj}
-                      type="button"
-                      onClick={() =>
-                        setInputProject((curr) =>
-                          curr.trim().toLowerCase() === proj.toLowerCase() ? "" : proj
-                        )
-                      }
-                      className={`text-xs px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg border transition-all duration-200 whitespace-nowrap font-medium flex items-center gap-1 flex-shrink-0 ${
-                        isSelected
-                          ? "bg-purple-600 text-white border-purple-600 font-semibold shadow-sm ring-2 ring-purple-600/30 scale-105"
-                          : "bg-gray-100/90 hover:bg-purple-500/15 dark:bg-gray-800 dark:hover:bg-purple-950/40 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:border-purple-300 dark:hover:border-purple-700/50 hover:text-purple-700 dark:hover:text-purple-300"
-                      }`}
-                    >
-                      <span className={isSelected ? "text-purple-200 font-bold" : "text-purple-500 dark:text-purple-400 font-bold"}>#</span>
-                      <span>{proj}</span>
-                    </button>
-                  );
-                })}
+              <div className="w-full max-w-full min-w-0 overflow-x-auto scrollbar-none pt-1 pb-0.5">
+                <div className="inline-flex items-center gap-1.5 sm:gap-2 whitespace-nowrap min-w-max">
+                  <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 flex items-center gap-1.5 whitespace-nowrap flex-shrink-0">
+                    <Tag className="w-3.5 h-3.5 text-purple-500" /> Quick Project:
+                  </span>
+                  {availableProjects.slice(0, 8).map((proj) => {
+                    const isSelected = inputProject.trim().toLowerCase() === proj.toLowerCase();
+                    return (
+                      <button
+                        key={proj}
+                        type="button"
+                        onClick={() =>
+                          setInputProject((curr) =>
+                            curr.trim().toLowerCase() === proj.toLowerCase() ? "" : proj
+                          )
+                        }
+                        className={`text-xs px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg border transition-all duration-200 whitespace-nowrap font-medium flex items-center gap-1 flex-shrink-0 ${
+                          isSelected
+                            ? "bg-purple-600 text-white border-purple-600 font-semibold shadow-sm ring-2 ring-purple-600/30 scale-105"
+                            : "bg-gray-100/90 hover:bg-purple-500/15 dark:bg-gray-800 dark:hover:bg-purple-950/40 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:border-purple-300 dark:hover:border-purple-700/50 hover:text-purple-700 dark:hover:text-purple-300"
+                        }`}
+                      >
+                        <span className={isSelected ? "text-purple-200 font-bold" : "text-purple-500 dark:text-purple-400 font-bold"}>#</span>
+                        <span>{proj}</span>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             )}
           </div>
 
           {/* Project Filter Pills & Manage Button */}
           {availableProjects.length > 0 && (
-            <div className="flex items-center gap-1.5 overflow-x-auto pt-1 pb-0.5 scrollbar-none border-t border-gray-100 dark:border-gray-700/40 flex-nowrap">
-              <span className="text-[11px] font-semibold text-gray-500 dark:text-gray-400 flex items-center gap-1 flex-shrink-0">
-                <FolderKanban className="w-3.5 h-3.5 text-purple-500" /> Projects:
-              </span>
-              <button
-                type="button"
-                onClick={() => setSelectedProjectFilter("all")}
-                className={`text-xs px-2.5 py-1 rounded-lg transition-all flex-shrink-0 ${
-                  selectedProjectFilter === "all"
-                    ? "bg-purple-600 text-white shadow-sm font-semibold"
-                    : "bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300"
-                }`}
-              >
-                All
-              </button>
-              {availableProjects.map((proj) => {
-                const count = (
-                  filterMode === "date"
-                    ? todos.filter(
-                        (t: any) =>
-                          !t?.isDeleted &&
-                          !t?.completed &&
-                          getTodoDateKey(t) === selectedDateKey &&
-                          t.project?.trim().toLowerCase() === proj.toLowerCase()
-                      )
-                    : todos.filter(
-                        (t: any) =>
-                          !t?.isDeleted &&
-                          !t?.completed &&
-                          t.project?.trim().toLowerCase() === proj.toLowerCase()
-                      )
-                ).length;
+            <div className="w-full max-w-full min-w-0 overflow-x-auto scrollbar-none border-t border-gray-100 dark:border-gray-700/40 pt-1.5 pb-0.5">
+              <div className="inline-flex items-center gap-1.5 whitespace-nowrap min-w-max">
+                <span className="text-[11px] font-semibold text-gray-500 dark:text-gray-400 flex items-center gap-1 flex-shrink-0">
+                  <FolderKanban className="w-3.5 h-3.5 text-purple-500" /> Projects:
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setSelectedProjectFilter("all")}
+                  className={`text-xs px-2.5 py-1 rounded-lg transition-all flex-shrink-0 ${
+                    selectedProjectFilter === "all"
+                      ? "bg-purple-600 text-white shadow-sm font-semibold"
+                      : "bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300"
+                  }`}
+                >
+                  All
+                </button>
+                {availableProjects.map((proj) => {
+                  const count = (
+                    filterMode === "date"
+                      ? todos.filter(
+                          (t: any) =>
+                            !t?.isDeleted &&
+                            !t?.completed &&
+                            getTodoDateKey(t) === selectedDateKey &&
+                            t.project?.trim().toLowerCase() === proj.toLowerCase()
+                        )
+                      : todos.filter(
+                          (t: any) =>
+                            !t?.isDeleted &&
+                            !t?.completed &&
+                            t.project?.trim().toLowerCase() === proj.toLowerCase()
+                        )
+                  ).length;
 
-                return (
-                  <button
-                    key={proj}
-                    type="button"
-                    onClick={() =>
-                      setSelectedProjectFilter((curr) =>
-                        curr.toLowerCase() === proj.toLowerCase() ? "all" : proj
-                      )
-                    }
-                    className={`text-xs px-2.5 py-1 rounded-lg transition-all flex items-center gap-1.5 flex-shrink-0 ${
-                      selectedProjectFilter.toLowerCase() === proj.toLowerCase()
-                        ? "bg-purple-600 text-white shadow-sm font-semibold ring-2 ring-purple-600/30"
-                        : "bg-purple-500/10 hover:bg-purple-500/20 text-purple-700 dark:text-purple-300 border border-purple-500/20"
-                    }`}
-                  >
-                    <span>{proj}</span>
-                    <span
-                      className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                  return (
+                    <button
+                      key={proj}
+                      type="button"
+                      onClick={() =>
+                        setSelectedProjectFilter((curr) =>
+                          curr.toLowerCase() === proj.toLowerCase() ? "all" : proj
+                        )
+                      }
+                      className={`text-xs px-2.5 py-1 rounded-lg transition-all flex items-center gap-1.5 flex-shrink-0 ${
                         selectedProjectFilter.toLowerCase() === proj.toLowerCase()
-                          ? "bg-purple-800 text-white"
-                          : "bg-purple-500/20 text-purple-700 dark:text-purple-300"
+                          ? "bg-purple-600 text-white shadow-sm font-semibold ring-2 ring-purple-600/30"
+                          : "bg-purple-500/10 hover:bg-purple-500/20 text-purple-700 dark:text-purple-300 border border-purple-500/20"
                       }`}
                     >
-                      {count}
-                    </span>
-                  </button>
-                );
-              })}
+                      <span>{proj}</span>
+                      <span
+                        className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                          selectedProjectFilter.toLowerCase() === proj.toLowerCase()
+                            ? "bg-purple-800 text-white"
+                            : "bg-purple-500/20 text-purple-700 dark:text-purple-300"
+                        }`}
+                      >
+                        {count}
+                      </span>
+                    </button>
+                  );
+                })}
 
-              {/* Manage Projects button */}
-              <button
-                type="button"
-                onClick={() => setIsProjectManagerOpen(true)}
-                className="text-xs px-2 py-1 rounded-lg text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-950/40 border border-dashed border-purple-300 dark:border-purple-700 flex items-center gap-1 transition-all flex-shrink-0 ml-auto"
-                title="Manage all projects (rename / delete)"
-              >
-                <Settings2 className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline font-medium">Manage</span>
-              </button>
+                {/* Manage Projects button */}
+                <button
+                  type="button"
+                  onClick={() => setIsProjectManagerOpen(true)}
+                  className="text-xs px-2 py-1 rounded-lg text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-950/40 border border-dashed border-purple-300 dark:border-purple-700 flex items-center gap-1 transition-all flex-shrink-0"
+                  title="Manage all projects (rename / delete)"
+                >
+                  <Settings2 className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline font-medium">Manage</span>
+                </button>
+              </div>
             </div>
           )}
 

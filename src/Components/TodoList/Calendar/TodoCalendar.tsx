@@ -170,7 +170,7 @@ export const TodoCalendar: React.FC<TodoCalendarProps> = ({
   const weekDayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
   return (
-    <div className={`w-full bg-white dark:bg-gray-800/90 backdrop-blur-sm rounded-2xl sm:rounded-3xl p-4 sm:p-5 shadow-lg border border-gray-100 dark:border-gray-700/60 transition-all duration-300 relative ${className}`}>
+    <div className={`w-full max-w-full min-w-0 bg-white dark:bg-gray-800/90 backdrop-blur-sm rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 shadow-lg border border-gray-100 dark:border-gray-700/60 transition-all duration-300 relative ${className}`}>
       {/* Calendar Header */}
       <div className="flex items-center justify-between mb-4 pb-3 border-b border-gray-100 dark:border-gray-700/50">
         <div className="flex items-center gap-2">
