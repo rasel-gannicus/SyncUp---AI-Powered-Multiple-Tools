@@ -73,9 +73,7 @@ export const useAddTodolist = ({
     // Optimistically add the new todo item to the list
     setTodos((prevTodos: any) => [...prevTodos, newTodo]);
     setInputValue("");
-    if (setProject) {
-      setProject("");
-    }
+    // Note: Do not clear project so the last selected project remains for the next task
     if (setAttachments) {
       setAttachments([]);
     }
@@ -110,7 +108,6 @@ export const useAddTodolist = ({
     completed,
     attachments,
     setInputValue,
-    setProject,
     setAttachments,
     setTodos,
   ]);

@@ -128,7 +128,7 @@ export const ProjectAutocomplete = ({
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
           autoFocus={autoFocus}
-          className={`h-8 pl-8 pr-7 text-xs rounded-lg border-gray-200 dark:border-gray-700 w-36 sm:w-44 focus:w-56 transition-all dark:bg-gray-900/60 focus:ring-2 focus:ring-purple-500/40 ${inputClassName}`}
+          className={`h-8 pl-8 pr-7 text-xs rounded-lg border-gray-200 dark:border-gray-700 w-36 sm:w-44 transition-colors dark:bg-gray-900/60 focus:ring-2 focus:ring-purple-500/40 ${inputClassName}`}
         />
         {value && (
           <button

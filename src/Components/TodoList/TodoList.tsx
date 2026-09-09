@@ -1316,28 +1316,32 @@ export const TodoList = ({ user }: { user: any }) => {
 
             {/* Quick suggested project chips if available */}
             {availableProjects.length > 0 && (
-              <div className="flex items-center gap-1.5 pt-0.5 overflow-x-auto text-[11px] scrollbar-none">
-                <span className="text-gray-400 flex items-center gap-1 whitespace-nowrap">
-                  <Tag className="w-3 h-3" /> Quick Project:
+              <div className="flex items-center gap-2 pt-1.5 pb-0.5 overflow-x-auto scrollbar-none">
+                <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 flex items-center gap-1.5 whitespace-nowrap">
+                  <Tag className="w-3.5 h-3.5 text-purple-500" /> Quick Project:
                 </span>
-                {availableProjects.slice(0, 5).map((proj) => (
-                  <button
-                    key={proj}
-                    type="button"
-                    onClick={() =>
-                      setInputProject((curr) =>
-                        curr.trim().toLowerCase() === proj.toLowerCase() ? "" : proj
-                      )
-                    }
-                    className={`px-2 py-0.5 rounded-md border transition-all whitespace-nowrap ${
-                      inputProject.trim().toLowerCase() === proj.toLowerCase()
-                        ? "bg-purple-500/20 text-purple-700 dark:text-purple-300 border-purple-500/50 font-semibold scale-105"
-                        : "bg-gray-50 dark:bg-gray-800/80 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:bg-purple-50 dark:hover:bg-purple-950/40"
-                    }`}
-                  >
-                    #{proj}
-                  </button>
-                ))}
+                {availableProjects.slice(0, 8).map((proj) => {
+                  const isSelected = inputProject.trim().toLowerCase() === proj.toLowerCase();
+                  return (
+                    <button
+                      key={proj}
+                      type="button"
+                      onClick={() =>
+                        setInputProject((curr) =>
+                          curr.trim().toLowerCase() === proj.toLowerCase() ? "" : proj
+                        )
+                      }
+                      className={`text-xs px-3 py-1.5 rounded-lg border transition-all duration-200 whitespace-nowrap font-medium flex items-center gap-1 ${
+                        isSelected
+                          ? "bg-purple-600 text-white border-purple-600 font-semibold shadow-sm ring-2 ring-purple-600/30 scale-105"
+                          : "bg-gray-100/90 hover:bg-purple-500/15 dark:bg-gray-800 dark:hover:bg-purple-950/40 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:border-purple-300 dark:hover:border-purple-700/50 hover:text-purple-700 dark:hover:text-purple-300"
+                      }`}
+                    >
+                      <span className={isSelected ? "text-purple-200 font-bold" : "text-purple-500 dark:text-purple-400 font-bold"}>#</span>
+                      <span>{proj}</span>
+                    </button>
+                  );
+                })}
               </div>
             )}
           </div>
@@ -1365,12 +1369,14 @@ export const TodoList = ({ user }: { user: any }) => {
                     ? todos.filter(
                         (t: any) =>
                           !t?.isDeleted &&
+                          !t?.completed &&
                           getTodoDateKey(t) === selectedDateKey &&
                           t.project?.trim().toLowerCase() === proj.toLowerCase()
                       )
                     : todos.filter(
                         (t: any) =>
                           !t?.isDeleted &&
+                          !t?.completed &&
                           t.project?.trim().toLowerCase() === proj.toLowerCase()
                       )
                 ).length;
