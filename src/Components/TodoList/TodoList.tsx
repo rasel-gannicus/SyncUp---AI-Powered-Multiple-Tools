@@ -131,6 +131,7 @@ export const TodoList = ({ user }: { user: any }) => {
 
   const [copiedId, setCopiedId] = useState<any>(null);
   const [selectedTodoIds, setSelectedTodoIds] = useState<string[]>([]);
+  const [isMarkingEnabled, setIsMarkingEnabled] = useState(false);
 
   const [deleteTodo] = useDeleteTodoMutation();
   const [bulkDeleteTodos] = useBulkDeleteTodosMutation();
@@ -1237,41 +1238,42 @@ export const TodoList = ({ user }: { user: any }) => {
             )}
 
             {/* Priority & Status & Project Selector & Scheduled Info Bar */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pt-1">
-              <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+            <div className="flex flex-col gap-2.5 pt-1">
+              {/* Status & Priority Row: Wraps gracefully on mobile */}
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
                 {/* Status Selection: Pending vs Completed (Default: Completed) */}
-                <div className="flex items-center gap-1 sm:gap-1.5">
+                <div className="flex flex-wrap items-center gap-1 sm:gap-1.5">
                   <span className="text-[11px] font-semibold text-gray-500 dark:text-gray-400 flex items-center gap-1 mr-0.5">
                     <CheckCircle2 className="w-3.5 h-3.5" /> Status:
                   </span>
                   <button
                     type="button"
                     onClick={() => setInputStatus("Pending")}
-                    className={`text-xs px-2 sm:px-2.5 py-1 rounded-lg font-semibold border transition-all duration-200 flex items-center gap-1.5 ${
+                    className={`text-[11px] sm:text-xs px-2 sm:px-2.5 py-1 rounded-lg font-semibold border transition-all duration-200 flex items-center gap-1.5 flex-shrink-0 ${
                       inputStatus === "Pending"
                         ? "bg-amber-500/15 dark:bg-amber-500/25 text-amber-700 dark:text-amber-300 border-amber-500/40 ring-1 ring-amber-500/30 shadow-sm scale-105"
                         : "bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700"
                     }`}
                   >
-                    <Circle className="w-3 h-3 text-amber-500 dark:text-amber-400" />
+                    <Circle className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-amber-500 dark:text-amber-400" />
                     <span>Pending</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => setInputStatus("Completed")}
-                    className={`text-xs px-2 sm:px-2.5 py-1 rounded-lg font-semibold border transition-all duration-200 flex items-center gap-1.5 ${
+                    className={`text-[11px] sm:text-xs px-2 sm:px-2.5 py-1 rounded-lg font-semibold border transition-all duration-200 flex items-center gap-1.5 flex-shrink-0 ${
                       inputStatus === "Completed"
                         ? "bg-emerald-500/15 dark:bg-emerald-500/25 text-emerald-700 dark:text-emerald-300 border-emerald-500/40 ring-1 ring-emerald-500/30 shadow-sm scale-105"
                         : "bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700"
                     }`}
                   >
-                    <CheckCircle2 className="w-3 h-3 text-emerald-500 dark:text-emerald-400" />
+                    <CheckCircle2 className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-emerald-500 dark:text-emerald-400" />
                     <span>Completed</span>
                   </button>
                 </div>
 
                 {/* Priority Selection Pills */}
-                <div className="flex items-center gap-1 sm:gap-1.5">
+                <div className="flex flex-wrap items-center gap-1 sm:gap-1.5">
                   <span className="text-[11px] font-semibold text-gray-500 dark:text-gray-400 flex items-center gap-1 mr-0.5">
                     <Flag className="w-3.5 h-3.5" /> Priority:
                   </span>
@@ -1283,7 +1285,7 @@ export const TodoList = ({ user }: { user: any }) => {
                         key={lvl}
                         type="button"
                         onClick={() => setInputPriority(lvl)}
-                        className={`text-xs px-2 sm:px-2.5 py-1 rounded-lg font-semibold border transition-all duration-200 flex items-center gap-1 ${
+                        className={`text-[11px] sm:text-xs px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded-lg font-semibold border transition-all duration-200 flex items-center gap-1 flex-shrink-0 ${
                           isSelected
                             ? `${cfg.bg} ${cfg.text} ${cfg.border} ring-1 ring-current shadow-sm scale-105`
                             : "bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700"
@@ -1295,7 +1297,10 @@ export const TodoList = ({ user }: { user: any }) => {
                     );
                   })}
                 </div>
+              </div>
 
+              {/* Project Autocomplete & Scheduled Date Row */}
+              <div className="flex flex-wrap items-center justify-between gap-2 pt-0.5">
                 {/* Project Autocomplete Input with Live Suggestions */}
                 <ProjectAutocomplete
                   value={inputProject}
@@ -1304,18 +1309,20 @@ export const TodoList = ({ user }: { user: any }) => {
                   projectCounts={projectCounts}
                   onOpenManager={() => setIsProjectManagerOpen(true)}
                   placeholder="Project (optional)"
+                  className="w-full sm:w-auto"
+                  inputClassName="w-full sm:w-44"
                 />
-              </div>
 
-              {/* Scheduled Date Note */}
-              <div className="flex items-center gap-1.5 text-[11px] text-gray-500 dark:text-gray-400 self-start sm:self-auto">
-                <Clock className="w-3.5 h-3.5 text-teal-600 dark:text-orange-400" />
-                <span>
-                  For{" "}
-                  <strong className="text-gray-700 dark:text-gray-200">
-                    {format(selectedDate, "dd-MM-yyyy")}
-                  </strong>
-                </span>
+                {/* Scheduled Date Note */}
+                <div className="flex items-center gap-1.5 text-[11px] text-gray-500 dark:text-gray-400">
+                  <Clock className="w-3.5 h-3.5 text-teal-600 dark:text-orange-400" />
+                  <span>
+                    For{" "}
+                    <strong className="text-gray-700 dark:text-gray-200">
+                      {format(selectedDate, "dd-MM-yyyy")}
+                    </strong>
+                  </span>
+                </div>
               </div>
             </div>
 
@@ -1504,28 +1511,57 @@ export const TodoList = ({ user }: { user: any }) => {
               )}
             </div>
 
-            {/* Mark All / Unmark All toggle + Task counter */}
+            {/* Mark / Selection Controls + Task counter */}
             <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto pt-1 sm:pt-0 border-t sm:border-t-0 border-gray-100 dark:border-gray-800">
               {filteredTodos.length > 0 && (
-                <button
-                  type="button"
-                  onClick={handleToggleSelectAll}
-                  className="text-xs font-semibold text-gray-600 dark:text-gray-300 hover:text-teal-600 dark:hover:text-orange-400 flex items-center gap-1.5 transition-colors p-1 px-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
-                  title={
-                    allFilteredSelected
-                      ? "Unmark all tasks"
-                      : "Mark all tasks for bulk action"
-                  }
-                >
-                  {allFilteredSelected ? (
-                    <CheckSquare className="w-4 h-4 text-teal-600 dark:text-orange-400" />
-                  ) : someFilteredSelected ? (
-                    <MinusSquare className="w-4 h-4 text-teal-600 dark:text-orange-400" />
+                <>
+                  {!isMarkingEnabled ? (
+                    <button
+                      type="button"
+                      onClick={() => setIsMarkingEnabled(true)}
+                      className="text-xs font-semibold text-gray-600 dark:text-gray-300 hover:text-teal-600 dark:hover:text-orange-400 flex items-center gap-1.5 transition-all py-1 px-2.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 border border-gray-200/80 dark:border-gray-700/80 hover:border-teal-500/40 dark:hover:border-orange-400/40"
+                      title="Enable marking for bulk operations"
+                    >
+                      <CheckSquare className="w-3.5 h-3.5 text-gray-400 dark:text-gray-500" />
+                      <span>Enable Marking</span>
+                    </button>
                   ) : (
-                    <Square className="w-4 h-4 text-gray-400" />
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={handleToggleSelectAll}
+                        className="text-xs font-semibold text-teal-600 dark:text-orange-400 flex items-center gap-1.5 transition-colors py-1 px-2.5 rounded-lg bg-teal-500/10 dark:bg-orange-500/15 hover:bg-teal-500/20 dark:hover:bg-orange-500/25 border border-teal-500/30 dark:border-orange-400/30"
+                        title={
+                          allFilteredSelected
+                            ? "Unmark all tasks"
+                            : "Mark all tasks for bulk action"
+                        }
+                      >
+                        {allFilteredSelected ? (
+                          <CheckSquare className="w-4 h-4 text-teal-600 dark:text-orange-400" />
+                        ) : someFilteredSelected ? (
+                          <MinusSquare className="w-4 h-4 text-teal-600 dark:text-orange-400" />
+                        ) : (
+                          <Square className="w-4 h-4 text-teal-600 dark:text-orange-400" />
+                        )}
+                        <span>{allFilteredSelected ? "Unmark All" : "Mark All"}</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsMarkingEnabled(false);
+                          setSelectedTodoIds([]);
+                        }}
+                        className="text-xs font-semibold text-gray-500 hover:text-rose-600 dark:hover:text-rose-400 flex items-center gap-1 py-1 px-2 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors"
+                        title="Done marking"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                        <span>Done</span>
+                      </button>
+                    </div>
                   )}
-                  <span>{allFilteredSelected ? "Unmark All" : "Mark All"}</span>
-                </button>
+                </>
               )}
 
               <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">
@@ -1571,7 +1607,7 @@ export const TodoList = ({ user }: { user: any }) => {
                 const todoDateStr = getTodoDateKey(todo);
                 const priority = normalizePriority(todo.priority);
                 const priorityCfg = PRIORITY_CONFIG[priority];
-                const isSelected = selectedTodoIds.includes(todo.createdAt);
+                const isSelected = isMarkingEnabled && selectedTodoIds.includes(todo.createdAt);
 
                 return (
                   <div
@@ -1584,30 +1620,32 @@ export const TodoList = ({ user }: { user: any }) => {
                         : "bg-white dark:bg-gray-900/70 border-gray-200/80 dark:border-gray-700/80 hover:border-teal-500/50 dark:hover:border-orange-400/50 shadow-sm"
                     }`}
                   >
-                    {/* Mark / Select Checkbox for bulk actions */}
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleToggleSelectTodo(todo.createdAt);
-                      }}
-                      className={`p-1 mt-0.5 sm:mt-0 rounded-lg transition-colors focus:outline-none flex-shrink-0 ${
-                        isSelected
-                          ? "text-teal-600 dark:text-orange-400"
-                          : "text-gray-300 dark:text-gray-600 hover:text-gray-500 dark:hover:text-gray-400"
-                      }`}
-                      title={
-                        isSelected
-                          ? "Unmark task"
-                          : "Mark task for bulk action"
-                      }
-                    >
-                      {isSelected ? (
-                        <CheckSquare className="w-4 h-4" />
-                      ) : (
-                        <Square className="w-4 h-4" />
-                      )}
-                    </button>
+                    {/* Mark / Select Checkbox for bulk actions (rendered ONLY when isMarkingEnabled is true) */}
+                    {isMarkingEnabled && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleToggleSelectTodo(todo.createdAt);
+                        }}
+                        className={`p-1 mt-0.5 sm:mt-0 rounded-lg transition-colors focus:outline-none flex-shrink-0 animate-in fade-in zoom-in-95 duration-150 ${
+                          isSelected
+                            ? "text-teal-600 dark:text-orange-400"
+                            : "text-gray-300 dark:text-gray-600 hover:text-gray-500 dark:hover:text-gray-400"
+                        }`}
+                        title={
+                          isSelected
+                            ? "Unmark task"
+                            : "Mark task for bulk action"
+                        }
+                      >
+                        {isSelected ? (
+                          <CheckSquare className="w-4 h-4" />
+                        ) : (
+                          <Square className="w-4 h-4" />
+                        )}
+                      </button>
+                    )}
 
                     {/* Status Checkbox Button */}
                     <button

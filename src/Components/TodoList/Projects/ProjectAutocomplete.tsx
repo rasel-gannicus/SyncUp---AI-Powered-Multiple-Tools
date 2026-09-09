@@ -108,9 +108,9 @@ export const ProjectAutocomplete = ({
   };
 
   return (
-    <div ref={containerRef} className={`relative inline-block ${className}`}>
+    <div ref={containerRef} className={`relative ${className || "inline-block"}`}>
       {/* Project Input Field */}
-      <div className="relative flex items-center">
+      <div className="relative flex items-center w-full">
         <FolderKanban className="w-3.5 h-3.5 absolute left-2.5 text-purple-600 dark:text-purple-400 pointer-events-none transition-colors" />
         <Input
           ref={inputRef}
@@ -128,7 +128,7 @@ export const ProjectAutocomplete = ({
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
           autoFocus={autoFocus}
-          className={`h-8 pl-8 pr-7 text-xs rounded-lg border-gray-200 dark:border-gray-700 w-36 sm:w-44 transition-colors dark:bg-gray-900/60 focus:ring-2 focus:ring-purple-500/40 ${inputClassName}`}
+          className={`h-8 pl-8 pr-7 text-xs rounded-lg border-gray-200 dark:border-gray-700 transition-colors dark:bg-gray-900/60 focus:ring-2 focus:ring-purple-500/40 ${inputClassName || "w-36 sm:w-44"}`}
         />
         {value && (
           <button
