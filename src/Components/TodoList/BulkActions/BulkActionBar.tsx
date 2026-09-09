@@ -62,14 +62,14 @@ export const BulkActionBar: React.FC<BulkActionBarProps> = ({
   return (
     <>
       {/* Floating Docked Bulk Action Bar */}
-      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 w-[92%] max-w-2xl animate-in slide-in-from-bottom-5 fade-in-0 duration-300">
-        <div className="bg-gray-900/95 dark:bg-gray-800/95 text-white backdrop-blur-md rounded-2xl p-2.5 sm:p-3 px-3.5 sm:px-5 shadow-2xl border border-gray-700/80 flex items-center justify-between gap-2.5 sm:gap-4 ring-1 ring-white/10">
+      <div className="fixed bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 z-40 w-[96%] sm:w-[92%] max-w-2xl animate-in slide-in-from-bottom-5 fade-in-0 duration-300">
+        <div className="bg-gray-900/95 dark:bg-gray-800/95 text-white backdrop-blur-md rounded-2xl p-2 sm:p-3 px-3 sm:px-5 shadow-2xl border border-gray-700/80 flex items-center justify-between gap-1.5 sm:gap-4 ring-1 ring-white/10">
           {/* Left: Selected count and Select All toggle */}
-          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+          <div className="flex items-center gap-1.5 sm:gap-3 min-w-0">
             <button
               type="button"
               onClick={onToggleSelectAll}
-              className="flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-teal-400 dark:text-orange-400 hover:text-teal-300 dark:hover:text-orange-300 transition-colors flex-shrink-0"
+              className="flex items-center gap-1 sm:gap-1.5 text-xs sm:text-sm font-semibold text-teal-400 dark:text-orange-400 hover:text-teal-300 dark:hover:text-orange-300 transition-colors flex-shrink-0"
               title={allSelected ? "Deselect all visible tasks" : "Select all visible tasks"}
             >
               {allSelected ? (
@@ -97,10 +97,10 @@ export const BulkActionBar: React.FC<BulkActionBarProps> = ({
               type="button"
               onClick={() => handleCompleteAction(true)}
               disabled={isUpdating || isDeleting || isLoading}
-              className="p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl text-xs font-semibold bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 transition-all flex items-center gap-1.5 active:scale-95 disabled:opacity-50"
+              className="p-2 sm:px-2.5 sm:py-1.5 rounded-xl text-xs font-semibold bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 transition-all flex items-center gap-1.5 active:scale-95 disabled:opacity-50"
               title="Mark selected tasks as completed"
             >
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+              <CheckCircle2 className="w-4 h-4 sm:w-3.5 sm:h-3.5 text-emerald-400" />
               <span className="hidden md:inline">Mark Done</span>
             </button>
 
@@ -109,10 +109,10 @@ export const BulkActionBar: React.FC<BulkActionBarProps> = ({
               type="button"
               onClick={() => handleCompleteAction(false)}
               disabled={isUpdating || isDeleting || isLoading}
-              className="p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl text-xs font-semibold bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 transition-all flex items-center gap-1.5 active:scale-95 disabled:opacity-50"
+              className="p-2 sm:px-2.5 sm:py-1.5 rounded-xl text-xs font-semibold bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 transition-all flex items-center gap-1.5 active:scale-95 disabled:opacity-50"
               title="Mark selected tasks as pending"
             >
-              <Circle className="w-3.5 h-3.5 text-amber-400" />
+              <Circle className="w-4 h-4 sm:w-3.5 sm:h-3.5 text-amber-400" />
               <span className="hidden md:inline">Mark Active</span>
             </button>
 
@@ -121,10 +121,10 @@ export const BulkActionBar: React.FC<BulkActionBarProps> = ({
               type="button"
               onClick={() => setShowDeleteConfirm(true)}
               disabled={isUpdating || isDeleting || isLoading}
-              className="p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl text-xs font-semibold bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/40 transition-all flex items-center gap-1.5 active:scale-95 disabled:opacity-50"
+              className="p-2 sm:px-2.5 sm:py-1.5 rounded-xl text-xs font-semibold bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/40 transition-all flex items-center gap-1.5 active:scale-95 disabled:opacity-50"
               title="Delete selected tasks"
             >
-              <Trash2 className="w-3.5 h-3.5 text-rose-400" />
+              <Trash2 className="w-4 h-4 sm:w-3.5 sm:h-3.5 text-rose-400" />
               <span className="hidden sm:inline">Delete</span>
             </button>
 
@@ -132,7 +132,7 @@ export const BulkActionBar: React.FC<BulkActionBarProps> = ({
             <button
               type="button"
               onClick={onClearSelection}
-              className="p-1.5 rounded-xl text-gray-400 hover:text-white hover:bg-gray-800 transition-colors ml-1"
+              className="p-2 rounded-xl text-gray-400 hover:text-white hover:bg-gray-800 transition-colors ml-0.5 sm:ml-1"
               title="Clear selection (Esc)"
             >
               <X className="w-4 h-4" />

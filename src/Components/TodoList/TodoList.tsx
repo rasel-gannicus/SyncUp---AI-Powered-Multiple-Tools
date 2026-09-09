@@ -844,204 +844,47 @@ export const TodoList = ({ user }: { user: any }) => {
   const priorityLevels: PriorityLevel[] = ["Low", "Medium", "High", "Urgent"];
 
   return (
-    <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-10 transition-colors">
+    <div className="w-full max-w-6xl mx-auto px-3 sm:px-6 py-4 sm:py-10 transition-colors">
       {/* Top Banner / Heading */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 bg-gradient-to-r from-teal-500/10 via-emerald-500/5 to-transparent dark:from-orange-500/10 dark:via-amber-500/5 dark:to-transparent p-6 rounded-3xl border border-teal-500/20 dark:border-orange-500/20 backdrop-blur-sm">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-6 sm:mb-8 bg-gradient-to-r from-teal-500/10 via-emerald-500/5 to-transparent dark:from-orange-500/10 dark:via-amber-500/5 dark:to-transparent p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-teal-500/20 dark:border-orange-500/20 backdrop-blur-sm">
         <div>
-          <div className="flex items-center gap-2.5 mb-1.5">
-            <div className="p-2 rounded-xl bg-teal-500 text-white dark:bg-orange-400 dark:text-gray-950 shadow-md">
-              <ListTodo className="w-6 h-6" />
+          <div className="flex items-center gap-2 sm:gap-2.5 mb-1">
+            <div className="p-1.5 sm:p-2 rounded-xl bg-teal-500 text-white dark:bg-orange-400 dark:text-gray-950 shadow-md">
+              <ListTodo className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight">
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight">
               Todo List & Calendar
             </h1>
           </div>
-          <p className="text-sm text-gray-600 dark:text-gray-400">
+          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
             Organize, schedule, and prioritize your daily tasks with ease.
           </p>
         </div>
 
         {/* Selected Date Quick Status */}
-        <div className="flex items-center gap-3 bg-white dark:bg-gray-800/80 px-4 py-3 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700/60">
-          <CalendarDays className="w-5 h-5 text-teal-600 dark:text-orange-400" />
+        <div className="flex items-center gap-2.5 sm:gap-3 bg-white dark:bg-gray-800/80 px-3.5 sm:px-4 py-2.5 sm:py-3 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700/60 self-start sm:self-auto">
+          <CalendarDays className="w-4 h-4 sm:w-5 sm:h-5 text-teal-600 dark:text-orange-400" />
           <div className="text-left">
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold uppercase tracking-wider text-teal-600 dark:text-orange-400">
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <span className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-teal-600 dark:text-orange-400">
                 {getDateLabel(selectedDate)}
               </span>
               <span className="text-xs text-gray-400">•</span>
-              <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
+              <span className="text-[11px] sm:text-xs font-medium text-gray-500 dark:text-gray-400">
                 {selectedDateStats.total} {selectedDateStats.total === 1 ? "task" : "tasks"}
               </span>
             </div>
-            <p className="text-sm font-bold text-gray-800 dark:text-gray-100">
+            <p className="text-xs sm:text-sm font-bold text-gray-800 dark:text-gray-100">
               {format(selectedDate, "dd-MM-yyyy")}
             </p>
           </div>
         </div>
       </div>
 
-      {/* Top Overview & Synced Progress Bar with Clickable Priorities */}
-      <div className="mb-8 bg-white dark:bg-gray-800/90 backdrop-blur-sm rounded-3xl p-5 sm:p-6 shadow-lg border border-gray-100 dark:border-gray-700/60 transition-all duration-300">
-        {/* Header Row: Title & Percentage */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-          <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-xl bg-teal-500/10 dark:bg-orange-500/10 text-teal-600 dark:text-orange-400">
-              <Sparkles className="w-5 h-5" />
-            </div>
-            <div>
-              <h3 className="text-base sm:text-lg font-bold text-gray-800 dark:text-gray-100 tracking-tight">
-                {activeStats.title}
-              </h3>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                {activeStats.completed} of {activeStats.total} {activeStats.total === 1 ? "task" : "tasks"} completed
-                {entityFilter !== "total" && (
-                  <span className="ml-2 inline-flex items-center text-teal-600 dark:text-orange-400 font-semibold">
-                    • Filtered by: {entityFilter}
-                  </span>
-                )}
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <span className="text-xs sm:text-sm font-bold px-3 py-1.5 rounded-xl bg-teal-50 dark:bg-orange-500/10 text-teal-700 dark:text-orange-400 border border-teal-500/20 dark:border-orange-500/20 shadow-sm">
-              {activeStats.percentage}% Completed
-            </span>
-          </div>
-        </div>
-
-        {/* Full-width Animated Progress Bar */}
-        <div className="w-full bg-gray-100 dark:bg-gray-700/70 rounded-full h-3 overflow-hidden mb-5">
-          <div
-            className="bg-gradient-to-r from-teal-500 via-emerald-500 to-amber-500 dark:from-orange-400 dark:via-amber-400 dark:to-emerald-400 h-3 rounded-full transition-all duration-500 shadow-sm"
-            style={{ width: `${activeStats.percentage}%` }}
-          />
-        </div>
-
-        {/* Clickable Entities Row: Status Metrics + Priority Breakdown Entities */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2.5 pt-1">
-          {/* Total Tasks (Click to show all) */}
-          <button
-            type="button"
-            onClick={() => handleSelectEntity("total")}
-            title="Show all tasks"
-            className={`p-2.5 rounded-xl border transition-all duration-200 flex flex-col items-center justify-center text-center cursor-pointer hover:scale-[1.03] active:scale-95 ${
-              entityFilter === "total"
-                ? "bg-teal-500/15 dark:bg-orange-500/15 border-teal-500 dark:border-orange-400 ring-2 ring-teal-500/70 dark:ring-orange-400/70 shadow-sm scale-[1.03]"
-                : "bg-gray-50 dark:bg-gray-700/40 border-gray-100 dark:border-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700/70"
-            }`}
-          >
-            <span className="text-[11px] font-semibold text-gray-500 dark:text-gray-400">Total</span>
-            <span className="text-base font-extrabold text-gray-800 dark:text-white mt-0.5">
-              {activeStats.total}
-            </span>
-          </button>
-
-          {/* Pending Tasks (Click to filter pending) */}
-          <button
-            type="button"
-            onClick={() => handleSelectEntity("pending")}
-            title="Filter pending tasks"
-            className={`p-2.5 rounded-xl border transition-all duration-200 flex flex-col items-center justify-center text-center cursor-pointer hover:scale-[1.03] active:scale-95 text-amber-600 dark:text-orange-400 ${
-              entityFilter === "pending"
-                ? "bg-amber-500/25 border-amber-500 dark:border-orange-400 ring-2 ring-amber-500 dark:ring-orange-400 shadow-sm scale-[1.03] font-bold"
-                : "bg-amber-500/10 border-amber-500/20 hover:bg-amber-500/20"
-            }`}
-          >
-            <span className="text-[11px] font-semibold">Pending</span>
-            <span className="text-base font-extrabold mt-0.5">{activeStats.pending}</span>
-          </button>
-
-          {/* Done Tasks (Click to filter completed) */}
-          <button
-            type="button"
-            onClick={() => handleSelectEntity("done")}
-            title="Filter completed tasks"
-            className={`p-2.5 rounded-xl border transition-all duration-200 flex flex-col items-center justify-center text-center cursor-pointer hover:scale-[1.03] active:scale-95 text-emerald-600 dark:text-emerald-400 ${
-              entityFilter === "done"
-                ? "bg-emerald-500/25 border-emerald-500 dark:border-emerald-400 ring-2 ring-emerald-500 dark:ring-emerald-400 shadow-sm scale-[1.03] font-bold"
-                : "bg-emerald-500/10 border-emerald-500/20 hover:bg-emerald-500/20"
-            }`}
-          >
-            <span className="text-[11px] font-semibold">Done</span>
-            <span className="text-base font-extrabold mt-0.5">{activeStats.completed}</span>
-          </button>
-
-          {/* Urgent Priority Entity (Click to filter urgent) */}
-          <button
-            type="button"
-            onClick={() => handleSelectEntity("Urgent")}
-            title="Filter Urgent priority tasks"
-            className={`p-2.5 rounded-xl border transition-all duration-200 flex flex-col items-center justify-center text-center cursor-pointer hover:scale-[1.03] active:scale-95 text-rose-600 dark:text-rose-400 ${
-              entityFilter === "Urgent"
-                ? "bg-rose-500/25 border-rose-500 ring-2 ring-rose-500 shadow-md shadow-rose-500/20 scale-[1.03] font-bold"
-                : "bg-rose-500/10 border-rose-500/20 hover:bg-rose-500/20"
-            }`}
-          >
-            <span className="text-[11px] font-semibold flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-rose-500" /> Urgent
-            </span>
-            <span className="text-base font-extrabold mt-0.5">{activeStats.priorities.Urgent}</span>
-          </button>
-
-          {/* High Priority Entity (Click to filter high) */}
-          <button
-            type="button"
-            onClick={() => handleSelectEntity("High")}
-            title="Filter High priority tasks"
-            className={`p-2.5 rounded-xl border transition-all duration-200 flex flex-col items-center justify-center text-center cursor-pointer hover:scale-[1.03] active:scale-95 text-amber-600 dark:text-amber-400 ${
-              entityFilter === "High"
-                ? "bg-amber-500/25 border-amber-500 ring-2 ring-amber-500 shadow-md shadow-amber-500/20 scale-[1.03] font-bold"
-                : "bg-amber-500/10 border-amber-500/20 hover:bg-amber-500/20"
-            }`}
-          >
-            <span className="text-[11px] font-semibold flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-amber-500" /> High
-            </span>
-            <span className="text-base font-extrabold mt-0.5">{activeStats.priorities.High}</span>
-          </button>
-
-          {/* Medium Priority Entity (Click to filter medium) */}
-          <button
-            type="button"
-            onClick={() => handleSelectEntity("Medium")}
-            title="Filter Medium priority tasks"
-            className={`p-2.5 rounded-xl border transition-all duration-200 flex flex-col items-center justify-center text-center cursor-pointer hover:scale-[1.03] active:scale-95 text-teal-600 dark:text-teal-400 ${
-              entityFilter === "Medium"
-                ? "bg-teal-500/25 border-teal-500 ring-2 ring-teal-500 shadow-md shadow-teal-500/20 scale-[1.03] font-bold"
-                : "bg-teal-500/10 border-teal-500/20 hover:bg-teal-500/20"
-            }`}
-          >
-            <span className="text-[11px] font-semibold flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-teal-500" /> Medium
-            </span>
-            <span className="text-base font-extrabold mt-0.5">{activeStats.priorities.Medium}</span>
-          </button>
-
-          {/* Low Priority Entity (Click to filter low) */}
-          <button
-            type="button"
-            onClick={() => handleSelectEntity("Low")}
-            title="Filter Low priority tasks"
-            className={`p-2.5 rounded-xl border transition-all duration-200 flex flex-col items-center justify-center text-center cursor-pointer hover:scale-[1.03] active:scale-95 text-blue-600 dark:text-blue-400 col-span-2 sm:col-span-1 ${
-              entityFilter === "Low"
-                ? "bg-blue-500/25 border-blue-500 ring-2 ring-blue-500 shadow-md shadow-blue-500/20 scale-[1.03] font-bold"
-                : "bg-blue-500/10 border-blue-500/20 hover:bg-blue-500/20"
-            }`}
-          >
-            <span className="text-[11px] font-semibold flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-blue-500" /> Low
-            </span>
-            <span className="text-base font-extrabold mt-0.5">{activeStats.priorities.Low}</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Main Content: 2-Column Responsive Layout */}
+      {/* Main Content Layout: 2-Column Responsive Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* Left Column: Calendar (5 Columns on Desktop) */}
-        <div className="lg:col-span-5 space-y-6">
+        {/* Left Column: Calendar (5 Columns on Desktop, Top on Mobile) */}
+        <div className="lg:col-span-5 space-y-6 w-full">
           {/* Interactive Calendar */}
           <TodoCalendar
             selectedDate={selectedDate}
@@ -1054,12 +897,12 @@ export const TodoList = ({ user }: { user: any }) => {
         </div>
 
         {/* Right Column: Task Management & List (7 Columns on Desktop) */}
-        <div className="lg:col-span-7 bg-white dark:bg-gray-800/90 backdrop-blur-sm rounded-2xl p-5 sm:p-7 shadow-lg border border-gray-100 dark:border-gray-700/60 space-y-6">
+        <div className="lg:col-span-7 bg-white dark:bg-gray-800/90 backdrop-blur-sm rounded-2xl sm:rounded-3xl p-4 sm:p-7 shadow-lg border border-gray-100 dark:border-gray-700/60 space-y-5 sm:space-y-6">
           {/* Header of Task Panel */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-gray-100 dark:border-gray-700/50">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 sm:pb-4 border-b border-gray-100 dark:border-gray-700/50">
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-xl font-bold text-gray-900 dark:text-white tracking-tight">
+                <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white tracking-tight">
                   {filterMode === "date"
                     ? `Tasks for ${format(selectedDate, "dd-MM-yyyy")}`
                     : "All Scheduled Tasks"}
@@ -1073,19 +916,19 @@ export const TodoList = ({ user }: { user: any }) => {
             </div>
 
             {/* Actions: Daily Report + Monthly Report + View Mode Switcher */}
-            <div className="flex flex-wrap items-center gap-2">
-              <div className="flex items-center gap-1.5">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full sm:w-auto">
+              <div className="grid grid-cols-2 sm:flex items-center gap-1.5 w-full sm:w-auto">
                 <Button
                   type="button"
                   onClick={() => {
                     setReportInitialTab("daily");
                     setIsReportModalOpen(true);
                   }}
-                  className="bg-gradient-to-r from-teal-500 to-emerald-600 dark:from-orange-400 dark:to-amber-500 hover:opacity-90 text-white dark:text-gray-950 px-3 py-1.5 h-8 rounded-xl text-xs font-bold shadow-sm flex items-center gap-1.5 transition-all active:scale-95"
+                  className="bg-gradient-to-r from-teal-500 to-emerald-600 dark:from-orange-400 dark:to-amber-500 hover:opacity-90 text-white dark:text-gray-950 px-2.5 sm:px-3 py-1.5 h-8 rounded-xl text-xs font-bold shadow-sm flex items-center justify-center gap-1.5 transition-all active:scale-95"
                   title="Create and copy daily report"
                 >
-                  <FileText className="w-3.5 h-3.5" />
-                  <span>Daily Report</span>
+                  <FileText className="w-3.5 h-3.5 flex-shrink-0" />
+                  <span className="truncate">Daily Report</span>
                 </Button>
 
                 <Button
@@ -1094,20 +937,20 @@ export const TodoList = ({ user }: { user: any }) => {
                     setReportInitialTab("monthly");
                     setIsReportModalOpen(true);
                   }}
-                  className="bg-gradient-to-r from-indigo-500 to-blue-600 dark:from-amber-400 dark:to-orange-500 hover:opacity-90 text-white dark:text-gray-950 px-3 py-1.5 h-8 rounded-xl text-xs font-bold shadow-sm flex items-center gap-1.5 transition-all active:scale-95"
+                  className="bg-gradient-to-r from-indigo-500 to-blue-600 dark:from-amber-400 dark:to-orange-500 hover:opacity-90 text-white dark:text-gray-950 px-2.5 sm:px-3 py-1.5 h-8 rounded-xl text-xs font-bold shadow-sm flex items-center justify-center gap-1.5 transition-all active:scale-95"
                   title="Create and copy monthly report"
                 >
-                  <CalendarDays className="w-3.5 h-3.5" />
-                  <span>Monthly Report</span>
+                  <CalendarDays className="w-3.5 h-3.5 flex-shrink-0" />
+                  <span className="truncate">Monthly Report</span>
                 </Button>
               </div>
 
               {/* View Mode Switcher: Selected Date vs All Tasks */}
-              <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-700/60 p-1 rounded-xl">
+              <div className="grid grid-cols-2 sm:flex items-center gap-1 bg-gray-100 dark:bg-gray-700/60 p-1 rounded-xl w-full sm:w-auto">
                 <button
                   type="button"
                   onClick={() => setFilterMode("date")}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                  className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition-all text-center ${
                     filterMode === "date"
                       ? "bg-white dark:bg-gray-800 text-teal-600 dark:text-orange-400 shadow-sm"
                       : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
@@ -1118,7 +961,7 @@ export const TodoList = ({ user }: { user: any }) => {
                 <button
                   type="button"
                   onClick={() => setFilterMode("all")}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                  className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition-all text-center ${
                     filterMode === "all"
                       ? "bg-white dark:bg-gray-800 text-teal-600 dark:text-orange-400 shadow-sm"
                       : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
@@ -1130,10 +973,167 @@ export const TodoList = ({ user }: { user: any }) => {
             </div>
           </div>
 
+          {/* Overview & Synced Progress Bar with Clickable Priorities (Before Task Create) */}
+          <div className="bg-gray-50/80 dark:bg-gray-900/50 rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 border border-gray-100 dark:border-gray-700/60 transition-all duration-300">
+            {/* Header Row: Title & Percentage */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 mb-3.5">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 rounded-xl bg-teal-500/10 dark:bg-orange-500/10 text-teal-600 dark:text-orange-400">
+                  <Sparkles className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm sm:text-base font-bold text-gray-800 dark:text-gray-100 tracking-tight">
+                    {activeStats.title}
+                  </h3>
+                  <p className="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400">
+                    {activeStats.completed} of {activeStats.total} {activeStats.total === 1 ? "task" : "tasks"} completed
+                    {entityFilter !== "total" && (
+                      <span className="ml-1.5 inline-flex items-center text-teal-600 dark:text-orange-400 font-semibold">
+                        • Filtered by: {entityFilter}
+                      </span>
+                    )}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 self-start sm:self-auto">
+                <span className="text-xs font-bold px-2.5 py-1 rounded-lg bg-teal-50 dark:bg-orange-500/10 text-teal-700 dark:text-orange-400 border border-teal-500/20 dark:border-orange-500/20 shadow-xs">
+                  {activeStats.percentage}% Completed
+                </span>
+              </div>
+            </div>
+
+            {/* Full-width Animated Progress Bar */}
+            <div className="w-full bg-gray-200/80 dark:bg-gray-700/70 rounded-full h-2.5 sm:h-3 overflow-hidden mb-3.5 sm:mb-4">
+              <div
+                className="bg-gradient-to-r from-teal-500 via-emerald-500 to-amber-500 dark:from-orange-400 dark:via-amber-400 dark:to-emerald-400 h-2.5 sm:h-3 rounded-full transition-all duration-500 shadow-xs"
+                style={{ width: `${activeStats.percentage}%` }}
+              />
+            </div>
+
+            {/* Clickable Entities Row: Status Metrics + Priority Breakdown Entities */}
+            <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-7 gap-1.5 sm:gap-2 pt-0.5">
+              {/* Total Tasks (Click to show all) */}
+              <button
+                type="button"
+                onClick={() => handleSelectEntity("total")}
+                title="Show all tasks"
+                className={`p-2 rounded-xl border transition-all duration-200 flex flex-col items-center justify-center text-center cursor-pointer hover:scale-[1.03] active:scale-95 ${
+                  entityFilter === "total"
+                    ? "bg-teal-500/15 dark:bg-orange-500/15 border-teal-500 dark:border-orange-400 ring-2 ring-teal-500/70 dark:ring-orange-400/70 shadow-sm scale-[1.03]"
+                    : "bg-white dark:bg-gray-800/80 border-gray-200/70 dark:border-gray-700/60 hover:bg-gray-50 dark:hover:bg-gray-700/70"
+                }`}
+              >
+                <span className="text-[10px] sm:text-[11px] font-semibold text-gray-500 dark:text-gray-400">Total</span>
+                <span className="text-xs sm:text-sm font-extrabold text-gray-800 dark:text-white mt-0.5">
+                  {activeStats.total}
+                </span>
+              </button>
+
+              {/* Pending Tasks (Click to filter pending) */}
+              <button
+                type="button"
+                onClick={() => handleSelectEntity("pending")}
+                title="Filter pending tasks"
+                className={`p-2 rounded-xl border transition-all duration-200 flex flex-col items-center justify-center text-center cursor-pointer hover:scale-[1.03] active:scale-95 text-amber-600 dark:text-orange-400 ${
+                  entityFilter === "pending"
+                    ? "bg-amber-500/25 border-amber-500 dark:border-orange-400 ring-2 ring-amber-500 dark:ring-orange-400 shadow-sm scale-[1.03] font-bold"
+                    : "bg-amber-500/10 border-amber-500/20 hover:bg-amber-500/20"
+                }`}
+              >
+                <span className="text-[10px] sm:text-[11px] font-semibold">Pending</span>
+                <span className="text-xs sm:text-sm font-extrabold mt-0.5">{activeStats.pending}</span>
+              </button>
+
+              {/* Done Tasks (Click to filter completed) */}
+              <button
+                type="button"
+                onClick={() => handleSelectEntity("done")}
+                title="Filter completed tasks"
+                className={`p-2 rounded-xl border transition-all duration-200 flex flex-col items-center justify-center text-center cursor-pointer hover:scale-[1.03] active:scale-95 text-emerald-600 dark:text-emerald-400 ${
+                  entityFilter === "done"
+                    ? "bg-emerald-500/25 border-emerald-500 dark:border-emerald-400 ring-2 ring-emerald-500 dark:ring-emerald-400 shadow-sm scale-[1.03] font-bold"
+                    : "bg-emerald-500/10 border-emerald-500/20 hover:bg-emerald-500/20"
+                }`}
+              >
+                <span className="text-[10px] sm:text-[11px] font-semibold">Done</span>
+                <span className="text-xs sm:text-sm font-extrabold mt-0.5">{activeStats.completed}</span>
+              </button>
+
+              {/* Urgent Priority Entity (Click to filter urgent) */}
+              <button
+                type="button"
+                onClick={() => handleSelectEntity("Urgent")}
+                title="Filter Urgent priority tasks"
+                className={`p-2 rounded-xl border transition-all duration-200 flex flex-col items-center justify-center text-center cursor-pointer hover:scale-[1.03] active:scale-95 text-rose-600 dark:text-rose-400 ${
+                  entityFilter === "Urgent"
+                    ? "bg-rose-500/25 border-rose-500 ring-2 ring-rose-500 shadow-md shadow-rose-500/20 scale-[1.03] font-bold"
+                    : "bg-rose-500/10 border-rose-500/20 hover:bg-rose-500/20"
+                }`}
+              >
+                <span className="text-[10px] sm:text-[11px] font-semibold flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-rose-500" /> Urgent
+                </span>
+                <span className="text-xs sm:text-sm font-extrabold mt-0.5">{activeStats.priorities.Urgent}</span>
+              </button>
+
+              {/* High Priority Entity (Click to filter high) */}
+              <button
+                type="button"
+                onClick={() => handleSelectEntity("High")}
+                title="Filter High priority tasks"
+                className={`p-2 rounded-xl border transition-all duration-200 flex flex-col items-center justify-center text-center cursor-pointer hover:scale-[1.03] active:scale-95 text-amber-600 dark:text-amber-400 ${
+                  entityFilter === "High"
+                    ? "bg-amber-500/25 border-amber-500 ring-2 ring-amber-500 shadow-md shadow-amber-500/20 scale-[1.03] font-bold"
+                    : "bg-amber-500/10 border-amber-500/20 hover:bg-amber-500/20"
+                }`}
+              >
+                <span className="text-[10px] sm:text-[11px] font-semibold flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500" /> High
+                </span>
+                <span className="text-xs sm:text-sm font-extrabold mt-0.5">{activeStats.priorities.High}</span>
+              </button>
+
+              {/* Medium Priority Entity (Click to filter medium) */}
+              <button
+                type="button"
+                onClick={() => handleSelectEntity("Medium")}
+                title="Filter Medium priority tasks"
+                className={`p-2 rounded-xl border transition-all duration-200 flex flex-col items-center justify-center text-center cursor-pointer hover:scale-[1.03] active:scale-95 text-teal-600 dark:text-teal-400 ${
+                  entityFilter === "Medium"
+                    ? "bg-teal-500/25 border-teal-500 ring-2 ring-teal-500 shadow-md shadow-teal-500/20 scale-[1.03] font-bold"
+                    : "bg-teal-500/10 border-teal-500/20 hover:bg-teal-500/20"
+                }`}
+              >
+                <span className="text-[10px] sm:text-[11px] font-semibold flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-teal-500" /> Med
+                </span>
+                <span className="text-xs sm:text-sm font-extrabold mt-0.5">{activeStats.priorities.Medium}</span>
+              </button>
+
+              {/* Low Priority Entity (Click to filter low) */}
+              <button
+                type="button"
+                onClick={() => handleSelectEntity("Low")}
+                title="Filter Low priority tasks"
+                className={`p-2 rounded-xl border transition-all duration-200 flex flex-col items-center justify-center text-center cursor-pointer hover:scale-[1.03] active:scale-95 text-blue-600 dark:text-blue-400 col-span-3 sm:col-span-1 ${
+                  entityFilter === "Low"
+                    ? "bg-blue-500/25 border-blue-500 ring-2 ring-blue-500 shadow-md shadow-blue-500/20 scale-[1.03] font-bold"
+                    : "bg-blue-500/10 border-blue-500/20 hover:bg-blue-500/20"
+                }`}
+              >
+                <span className="text-[10px] sm:text-[11px] font-semibold flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-blue-500" /> Low
+                </span>
+                <span className="text-xs sm:text-sm font-extrabold mt-0.5">{activeStats.priorities.Low}</span>
+              </button>
+            </div>
+          </div>
+
           {/* Add Task Input Form with Priority & Project Selector */}
           <div className="space-y-3">
-            <div className="flex gap-2">
-              <div className="relative flex-grow">
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <div className="relative flex-grow min-w-0">
                 <Input
                   type="text"
                   value={inputValue}
@@ -1145,8 +1145,8 @@ export const TodoList = ({ user }: { user: any }) => {
                       handleAddTodo();
                     }
                   }}
-                  placeholder={`Add task for ${format(selectedDate, "dd-MM-yyyy")}... (Paste screenshot Ctrl+V / Cmd+V)`}
-                  className="w-full pl-3.5 pr-4 py-2.5 rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900/70 focus:ring-2 focus:ring-teal-500 dark:focus:ring-orange-400"
+                  placeholder={`Add task for ${format(selectedDate, "dd-MM-yyyy")}...`}
+                  className="w-full pl-3 sm:pl-3.5 pr-3 py-2 sm:py-2.5 text-xs sm:text-sm rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900/70 focus:ring-2 focus:ring-teal-500 dark:focus:ring-orange-400"
                 />
               </div>
 
@@ -1173,7 +1173,7 @@ export const TodoList = ({ user }: { user: any }) => {
                   document.getElementById("task-image-upload")?.click()
                 }
                 disabled={isProcessingImages}
-                className="px-3 rounded-xl border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 gap-1.5 shadow-xs"
+                className="px-2.5 sm:px-3 h-10 rounded-xl border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 gap-1.5 shadow-xs relative flex-shrink-0"
                 title="Attach image or paste screenshot (Ctrl+V / Cmd+V)"
               >
                 {isProcessingImages ? (
@@ -1186,14 +1186,19 @@ export const TodoList = ({ user }: { user: any }) => {
                     ? `Attached (${inputAttachments.length})`
                     : "Attach"}
                 </span>
+                {inputAttachments.length > 0 && (
+                  <span className="sm:hidden absolute -top-1 -right-1 w-4 h-4 bg-teal-500 dark:bg-orange-400 text-white dark:text-gray-950 rounded-full text-[9px] font-bold flex items-center justify-center shadow-xs">
+                    {inputAttachments.length}
+                  </span>
+                )}
               </Button>
 
               <Button
                 type="button"
                 onClick={handleAddTodo}
-                className="bg-teal-500 hover:bg-teal-600 dark:bg-orange-400 dark:hover:bg-orange-500 text-white dark:text-gray-950 px-4 rounded-xl shadow-md transition-transform active:scale-95 font-semibold"
+                className="bg-teal-500 hover:bg-teal-600 dark:bg-orange-400 dark:hover:bg-orange-500 text-white dark:text-gray-950 px-3.5 sm:px-4 h-10 rounded-xl shadow-md transition-transform active:scale-95 font-semibold flex-shrink-0"
               >
-                <Plus className="w-5 h-5 mr-1" />
+                <Plus className="w-5 h-5 sm:mr-1" />
                 <span className="hidden sm:inline font-semibold">Add</span>
               </Button>
             </div>
@@ -1232,17 +1237,17 @@ export const TodoList = ({ user }: { user: any }) => {
             )}
 
             {/* Priority & Status & Project Selector & Scheduled Info Bar */}
-            <div className="flex flex-wrap items-center justify-between gap-2.5 pt-1">
-              <div className="flex flex-wrap items-center gap-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pt-1">
+              <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                 {/* Status Selection: Pending vs Completed (Default: Completed) */}
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1 sm:gap-1.5">
                   <span className="text-[11px] font-semibold text-gray-500 dark:text-gray-400 flex items-center gap-1 mr-0.5">
                     <CheckCircle2 className="w-3.5 h-3.5" /> Status:
                   </span>
                   <button
                     type="button"
                     onClick={() => setInputStatus("Pending")}
-                    className={`text-xs px-2.5 py-1 rounded-lg font-semibold border transition-all duration-200 flex items-center gap-1.5 ${
+                    className={`text-xs px-2 sm:px-2.5 py-1 rounded-lg font-semibold border transition-all duration-200 flex items-center gap-1.5 ${
                       inputStatus === "Pending"
                         ? "bg-amber-500/15 dark:bg-amber-500/25 text-amber-700 dark:text-amber-300 border-amber-500/40 ring-1 ring-amber-500/30 shadow-sm scale-105"
                         : "bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700"
@@ -1254,7 +1259,7 @@ export const TodoList = ({ user }: { user: any }) => {
                   <button
                     type="button"
                     onClick={() => setInputStatus("Completed")}
-                    className={`text-xs px-2.5 py-1 rounded-lg font-semibold border transition-all duration-200 flex items-center gap-1.5 ${
+                    className={`text-xs px-2 sm:px-2.5 py-1 rounded-lg font-semibold border transition-all duration-200 flex items-center gap-1.5 ${
                       inputStatus === "Completed"
                         ? "bg-emerald-500/15 dark:bg-emerald-500/25 text-emerald-700 dark:text-emerald-300 border-emerald-500/40 ring-1 ring-emerald-500/30 shadow-sm scale-105"
                         : "bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700"
@@ -1266,7 +1271,7 @@ export const TodoList = ({ user }: { user: any }) => {
                 </div>
 
                 {/* Priority Selection Pills */}
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1 sm:gap-1.5">
                   <span className="text-[11px] font-semibold text-gray-500 dark:text-gray-400 flex items-center gap-1 mr-0.5">
                     <Flag className="w-3.5 h-3.5" /> Priority:
                   </span>
@@ -1278,7 +1283,7 @@ export const TodoList = ({ user }: { user: any }) => {
                         key={lvl}
                         type="button"
                         onClick={() => setInputPriority(lvl)}
-                        className={`text-xs px-2.5 py-1 rounded-lg font-semibold border transition-all duration-200 flex items-center gap-1.5 ${
+                        className={`text-xs px-2 sm:px-2.5 py-1 rounded-lg font-semibold border transition-all duration-200 flex items-center gap-1 ${
                           isSelected
                             ? `${cfg.bg} ${cfg.text} ${cfg.border} ring-1 ring-current shadow-sm scale-105`
                             : "bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700"
@@ -1303,7 +1308,7 @@ export const TodoList = ({ user }: { user: any }) => {
               </div>
 
               {/* Scheduled Date Note */}
-              <div className="flex items-center gap-1.5 text-[11px] text-gray-500 dark:text-gray-400">
+              <div className="flex items-center gap-1.5 text-[11px] text-gray-500 dark:text-gray-400 self-start sm:self-auto">
                 <Clock className="w-3.5 h-3.5 text-teal-600 dark:text-orange-400" />
                 <span>
                   For{" "}
@@ -1316,8 +1321,8 @@ export const TodoList = ({ user }: { user: any }) => {
 
             {/* Quick suggested project chips if available */}
             {availableProjects.length > 0 && (
-              <div className="flex items-center gap-2 pt-1.5 pb-0.5 overflow-x-auto scrollbar-none">
-                <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 flex items-center gap-1.5 whitespace-nowrap">
+              <div className="flex items-center gap-1.5 sm:gap-2 pt-1 pb-0.5 overflow-x-auto scrollbar-none flex-nowrap">
+                <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 flex items-center gap-1.5 whitespace-nowrap flex-shrink-0">
                   <Tag className="w-3.5 h-3.5 text-purple-500" /> Quick Project:
                 </span>
                 {availableProjects.slice(0, 8).map((proj) => {
@@ -1331,7 +1336,7 @@ export const TodoList = ({ user }: { user: any }) => {
                           curr.trim().toLowerCase() === proj.toLowerCase() ? "" : proj
                         )
                       }
-                      className={`text-xs px-3 py-1.5 rounded-lg border transition-all duration-200 whitespace-nowrap font-medium flex items-center gap-1 ${
+                      className={`text-xs px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg border transition-all duration-200 whitespace-nowrap font-medium flex items-center gap-1 flex-shrink-0 ${
                         isSelected
                           ? "bg-purple-600 text-white border-purple-600 font-semibold shadow-sm ring-2 ring-purple-600/30 scale-105"
                           : "bg-gray-100/90 hover:bg-purple-500/15 dark:bg-gray-800 dark:hover:bg-purple-950/40 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:border-purple-300 dark:hover:border-purple-700/50 hover:text-purple-700 dark:hover:text-purple-300"
@@ -1348,7 +1353,7 @@ export const TodoList = ({ user }: { user: any }) => {
 
           {/* Project Filter Pills & Manage Button */}
           {availableProjects.length > 0 && (
-            <div className="flex items-center gap-1.5 overflow-x-auto pt-1 pb-0.5 scrollbar-none border-t border-gray-100 dark:border-gray-700/40">
+            <div className="flex items-center gap-1.5 overflow-x-auto pt-1 pb-0.5 scrollbar-none border-t border-gray-100 dark:border-gray-700/40 flex-nowrap">
               <span className="text-[11px] font-semibold text-gray-500 dark:text-gray-400 flex items-center gap-1 flex-shrink-0">
                 <FolderKanban className="w-3.5 h-3.5 text-purple-500" /> Projects:
               </span>
@@ -1424,13 +1429,13 @@ export const TodoList = ({ user }: { user: any }) => {
           )}
 
           {/* Filter Status Tabs & Active Filter Chips */}
-          <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-1">
             <div className="flex flex-wrap items-center gap-1.5">
               <Button
                 type="button"
                 size="sm"
                 onClick={() => handleChangeFilter("all")}
-                className={`rounded-xl text-xs font-semibold px-3 py-1.5 h-8 transition-all ${
+                className={`rounded-xl text-xs font-semibold px-2.5 sm:px-3 py-1.5 h-8 transition-all ${
                   filter === "all" && (entityFilter === "total" || entityFilter === "pending" || entityFilter === "done")
                     ? "bg-teal-500 hover:bg-teal-600 text-white dark:bg-orange-400 dark:hover:bg-orange-500 dark:text-gray-950 shadow-sm"
                     : "bg-gray-100 hover:bg-gray-200 text-gray-700 dark:bg-gray-700/60 dark:hover:bg-gray-700 dark:text-gray-300"
@@ -1442,7 +1447,7 @@ export const TodoList = ({ user }: { user: any }) => {
                 type="button"
                 size="sm"
                 onClick={() => handleChangeFilter("active")}
-                className={`rounded-xl text-xs font-semibold px-3 py-1.5 h-8 transition-all ${
+                className={`rounded-xl text-xs font-semibold px-2.5 sm:px-3 py-1.5 h-8 transition-all ${
                   filter === "active"
                     ? "bg-teal-500 hover:bg-teal-600 text-white dark:bg-orange-400 dark:hover:bg-orange-500 dark:text-gray-950 shadow-sm"
                     : "bg-gray-100 hover:bg-gray-200 text-gray-700 dark:bg-gray-700/60 dark:hover:bg-gray-700 dark:text-gray-300"
@@ -1454,7 +1459,7 @@ export const TodoList = ({ user }: { user: any }) => {
                 type="button"
                 size="sm"
                 onClick={() => handleChangeFilter("completed")}
-                className={`rounded-xl text-xs font-semibold px-3 py-1.5 h-8 transition-all ${
+                className={`rounded-xl text-xs font-semibold px-2.5 sm:px-3 py-1.5 h-8 transition-all ${
                   filter === "completed"
                     ? "bg-teal-500 hover:bg-teal-600 text-white dark:bg-orange-400 dark:hover:bg-orange-500 dark:text-gray-950 shadow-sm"
                     : "bg-gray-100 hover:bg-gray-200 text-gray-700 dark:bg-gray-700/60 dark:hover:bg-gray-700 dark:text-gray-300"
@@ -1500,7 +1505,7 @@ export const TodoList = ({ user }: { user: any }) => {
             </div>
 
             {/* Mark All / Unmark All toggle + Task counter */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto pt-1 sm:pt-0 border-t sm:border-t-0 border-gray-100 dark:border-gray-800">
               {filteredTodos.length > 0 && (
                 <button
                   type="button"
@@ -1737,6 +1742,7 @@ export const TodoList = ({ user }: { user: any }) => {
                       </div>
                     ) : (
                       <div className="flex flex-col flex-grow min-w-0">
+                        {/* Task Title (Spans full width without horizontal crowding) */}
                         <span
                           className={`text-sm leading-snug break-words transition-all ${
                             todo.completed
@@ -1747,55 +1753,93 @@ export const TodoList = ({ user }: { user: any }) => {
                           {todo.text}
                         </span>
 
-                        {/* Badges: Priority + Project + Date */}
-                        <div className="flex flex-wrap items-center gap-2 mt-1.5">
-                          {/* Interactive Priority Badge */}
-                          <div className="relative group/priority">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const currentIndex = priorityLevels.indexOf(priority);
-                                const nextIndex = (currentIndex + 1) % priorityLevels.length;
-                                handleChangePriority(todo.createdAt, priorityLevels[nextIndex]);
-                              }}
-                              title="Click to cycle priority"
-                              className={`text-[11px] font-semibold px-2 py-0.5 rounded-md border flex items-center gap-1.5 transition-all hover:scale-105 ${priorityCfg.bg} ${priorityCfg.text} ${priorityCfg.border}`}
-                            >
-                              <span className={`w-1.5 h-1.5 rounded-full ${priorityCfg.dot}`} />
-                              <span>{priority}</span>
-                            </button>
+                        {/* Badges & Mobile Action Buttons Row */}
+                        <div className="flex flex-wrap items-center justify-between gap-2 mt-2">
+                          {/* Badges: Priority + Project + Date */}
+                          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                            {/* Interactive Priority Badge */}
+                            <div className="relative group/priority">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const currentIndex = priorityLevels.indexOf(priority);
+                                  const nextIndex = (currentIndex + 1) % priorityLevels.length;
+                                  handleChangePriority(todo.createdAt, priorityLevels[nextIndex]);
+                                }}
+                                title="Click to cycle priority"
+                                className={`text-[11px] font-semibold px-2 py-0.5 rounded-md border flex items-center gap-1.5 transition-all hover:scale-105 ${priorityCfg.bg} ${priorityCfg.text} ${priorityCfg.border}`}
+                              >
+                                <span className={`w-1.5 h-1.5 rounded-full ${priorityCfg.dot}`} />
+                                <span>{priority}</span>
+                              </button>
+                            </div>
+
+                            {/* Project Badge */}
+                            {todo.project && typeof todo.project === "string" && todo.project.trim() && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setSelectedProjectFilter((curr) =>
+                                    curr.toLowerCase() === todo.project.trim().toLowerCase()
+                                      ? "all"
+                                      : todo.project.trim()
+                                  );
+                                }}
+                                title={`Filter by project: ${todo.project.trim()}`}
+                                className={`text-[11px] font-semibold px-2 py-0.5 rounded-md border flex items-center gap-1 transition-all hover:scale-105 ${
+                                  selectedProjectFilter.toLowerCase() === todo.project.trim().toLowerCase()
+                                    ? "bg-purple-600 text-white border-purple-600 shadow-sm ring-1 ring-purple-600"
+                                    : "bg-purple-500/10 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300 border-purple-500/20 hover:bg-purple-500/20"
+                                }`}
+                              >
+                                <FolderKanban className="w-3 h-3" />
+                                <span>{todo.project.trim()}</span>
+                              </button>
+                            )}
+
+                            {/* Date badge formatted as date-month-year (dd-MM-yyyy) */}
+                            {(filterMode === "all" || todoDateStr !== selectedDateKey) && (
+                              <span className="text-[11px] text-teal-600 dark:text-orange-400 font-medium flex items-center gap-1">
+                                <CalendarIcon className="w-3 h-3" />
+                                {formatDisplayDate(todoDateStr)}
+                              </span>
+                            )}
                           </div>
 
-                          {/* Project Badge */}
-                          {todo.project && typeof todo.project === "string" && todo.project.trim() && (
+                          {/* Mobile Action buttons (Copy, Edit & Delete) */}
+                          <div className="flex sm:hidden items-center gap-0.5 ml-auto">
                             <button
                               type="button"
-                              onClick={() => {
-                                setSelectedProjectFilter((curr) =>
-                                  curr.toLowerCase() === todo.project.trim().toLowerCase()
-                                    ? "all"
-                                    : todo.project.trim()
-                                );
-                              }}
-                              title={`Filter by project: ${todo.project.trim()}`}
-                              className={`text-[11px] font-semibold px-2 py-0.5 rounded-md border flex items-center gap-1 transition-all hover:scale-105 ${
-                                selectedProjectFilter.toLowerCase() === todo.project.trim().toLowerCase()
-                                  ? "bg-purple-600 text-white border-purple-600 shadow-sm ring-1 ring-purple-600"
-                                  : "bg-purple-500/10 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300 border-purple-500/20 hover:bg-purple-500/20"
-                              }`}
+                              onClick={() => handleCopyTodo(todo)}
+                              aria-label="Copy task text"
+                              title={copiedId === todo.createdAt ? "Copied!" : "Copy task"}
+                              className="p-1.5 rounded-lg text-gray-400 hover:text-teal-600 hover:bg-teal-50 dark:hover:text-orange-400 dark:hover:bg-gray-800 transition-colors"
                             >
-                              <FolderKanban className="w-3 h-3" />
-                              <span>{todo.project.trim()}</span>
+                              {copiedId === todo.createdAt ? (
+                                <Check className="w-3.5 h-3.5 text-emerald-500" />
+                              ) : (
+                                <Copy className="w-3.5 h-3.5" />
+                              )}
                             </button>
-                          )}
-
-                          {/* Date badge formatted as date-month-year (dd-MM-yyyy) */}
-                          {(filterMode === "all" || todoDateStr !== selectedDateKey) && (
-                            <span className="text-[11px] text-teal-600 dark:text-orange-400 font-medium flex items-center gap-1">
-                              <CalendarIcon className="w-3 h-3" />
-                              {formatDisplayDate(todoDateStr)}
-                            </span>
-                          )}
+                            <button
+                              type="button"
+                              onClick={() => handleStartEditing(todo)}
+                              aria-label="Edit task"
+                              title="Edit task"
+                              className="p-1.5 rounded-lg text-gray-400 hover:text-teal-600 hover:bg-teal-50 dark:hover:text-orange-400 dark:hover:bg-gray-800 transition-colors"
+                            >
+                              <Edit3 className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteTodo(todo.createdAt)}
+                              aria-label="Delete task"
+                              title="Delete task"
+                              className="p-1.5 rounded-lg text-gray-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:text-rose-400 dark:hover:bg-gray-800 transition-colors"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
                         </div>
 
                         {/* Task Image Attachments Thumbnails */}
@@ -1848,9 +1892,9 @@ export const TodoList = ({ user }: { user: any }) => {
                       </div>
                     )}
 
-                    {/* Action buttons (Copy, Edit & Delete) */}
+                    {/* Action buttons for Desktop (hidden on mobile, inline on sm+) */}
                     {!isEditing && (
-                      <div className="flex items-center gap-1 opacity-90 sm:opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+                      <div className="hidden sm:flex items-center gap-0.5 sm:gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
                         <button
                           type="button"
                           onClick={() => handleCopyTodo(todo)}

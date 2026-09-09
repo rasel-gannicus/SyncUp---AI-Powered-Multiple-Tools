@@ -145,19 +145,19 @@ export const ProjectManagerModal = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in-0 duration-200">
-      <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl border border-gray-100 dark:border-gray-700/80 w-full max-w-lg overflow-hidden flex flex-col max-h-[85vh]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm animate-in fade-in-0 duration-200">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl sm:rounded-3xl shadow-2xl border border-gray-100 dark:border-gray-700/80 w-full max-w-lg overflow-hidden flex flex-col max-h-[85vh]">
         {/* Modal Header */}
-        <div className="p-6 pb-4 border-b border-gray-100 dark:border-gray-700/60 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-2xl bg-purple-500/10 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400">
-              <FolderKanban className="w-6 h-6" />
+        <div className="p-4 sm:p-6 pb-3 sm:pb-4 border-b border-gray-100 dark:border-gray-700/60 flex items-center justify-between">
+          <div className="flex items-center gap-2.5 sm:gap-3">
+            <div className="p-2 sm:p-2.5 rounded-2xl bg-purple-500/10 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400">
+              <FolderKanban className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
             <div>
-              <h3 className="text-lg font-bold text-gray-900 dark:text-white tracking-tight">
+              <h3 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white tracking-tight">
                 Manage Projects
               </h3>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
+              <p className="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400">
                 Rename or delete project tags across all your tasks.
               </p>
             </div>
@@ -165,14 +165,14 @@ export const ProjectManagerModal = ({
           <button
             type="button"
             onClick={onClose}
-            className="p-2 rounded-xl text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            className="p-1.5 sm:p-2 rounded-xl text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Projects List & Actions */}
-        <div className="p-6 overflow-y-auto space-y-3 flex-grow">
+        <div className="p-4 sm:p-6 overflow-y-auto space-y-2.5 sm:space-y-3 flex-grow">
           {availableProjects.length === 0 ? (
             <div className="py-10 text-center text-gray-400">
               <Layers className="w-10 h-10 mx-auto mb-2 text-gray-300 dark:text-gray-600" />
@@ -197,7 +197,7 @@ export const ProjectManagerModal = ({
               return (
                 <div
                   key={proj}
-                  className="p-3.5 rounded-2xl border border-gray-100 dark:border-gray-700/60 bg-gray-50/70 dark:bg-gray-900/40 flex items-center justify-between gap-3 transition-all hover:border-purple-200 dark:hover:border-purple-800"
+                  className="p-3 sm:p-3.5 rounded-2xl border border-gray-100 dark:border-gray-700/60 bg-gray-50/70 dark:bg-gray-900/40 flex items-center justify-between gap-2.5 sm:gap-3 transition-all hover:border-purple-200 dark:hover:border-purple-800"
                 >
                   {isEditingThis ? (
                     <div className="flex items-center gap-2 flex-grow">

@@ -405,43 +405,52 @@ export const DailyReportModal = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in-0 duration-200">
-      <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl border border-gray-100 dark:border-gray-700/80 w-full max-w-2xl overflow-hidden flex flex-col max-h-[92vh]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2.5 sm:p-4 bg-black/60 backdrop-blur-sm animate-in fade-in-0 duration-200">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl sm:rounded-3xl shadow-2xl border border-gray-100 dark:border-gray-700/80 w-full max-w-2xl overflow-hidden flex flex-col max-h-[92vh]">
         {/* Modal Header */}
-        <div className="p-6 pb-4 border-b border-gray-100 dark:border-gray-700/60 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-2xl bg-teal-500/10 dark:bg-orange-500/15 text-teal-600 dark:text-orange-400">
-              {activeTab === "daily" ? (
-                <FileText className="w-6 h-6" />
-              ) : (
-                <CalendarDays className="w-6 h-6" />
-              )}
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h3 className="text-lg font-bold text-gray-900 dark:text-white tracking-tight">
-                  {activeTab === "daily"
-                    ? "Daily Task Report"
-                    : "Monthly Task Report"}
-                </h3>
-                <span className="text-[11px] px-2 py-0.5 rounded-md bg-teal-500/10 dark:bg-orange-500/15 text-teal-600 dark:text-orange-400 font-semibold flex items-center gap-1">
-                  <Sparkles className="w-3 h-3" /> Ready to share
-                </span>
+        <div className="p-4 sm:p-6 pb-3 sm:pb-4 border-b border-gray-100 dark:border-gray-700/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center justify-between w-full sm:w-auto">
+            <div className="flex items-center gap-2.5 sm:gap-3">
+              <div className="p-2 sm:p-2.5 rounded-2xl bg-teal-500/10 dark:bg-orange-500/15 text-teal-600 dark:text-orange-400">
+                {activeTab === "daily" ? (
+                  <FileText className="w-5 h-5 sm:w-6 sm:h-6" />
+                ) : (
+                  <CalendarDays className="w-5 h-5 sm:w-6 sm:h-6" />
+                )}
               </div>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                Formatted project-wise report. You can edit and copy the text
-                below.
-              </p>
+              <div>
+                <div className="flex items-center gap-1.5 sm:gap-2">
+                  <h3 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white tracking-tight">
+                    {activeTab === "daily"
+                      ? "Daily Task Report"
+                      : "Monthly Task Report"}
+                  </h3>
+                  <span className="text-[10px] sm:text-[11px] px-1.5 sm:px-2 py-0.5 rounded-md bg-teal-500/10 dark:bg-orange-500/15 text-teal-600 dark:text-orange-400 font-semibold flex items-center gap-1">
+                    <Sparkles className="w-3 h-3" /> Ready to share
+                  </span>
+                </div>
+                <p className="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400">
+                  Formatted project-wise report. Edit & copy below.
+                </p>
+              </div>
             </div>
+
+            <button
+              type="button"
+              onClick={onClose}
+              className="sm:hidden p-1.5 rounded-xl text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto">
             {/* Tab switch between Daily and Monthly */}
-            <div className="flex items-center bg-gray-100 dark:bg-gray-700/60 p-1 rounded-xl">
+            <div className="flex items-center bg-gray-100 dark:bg-gray-700/60 p-1 rounded-xl w-full sm:w-auto">
               <button
                 type="button"
                 onClick={() => setActiveTab("daily")}
-                className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${
+                className={`flex-1 sm:flex-initial px-3 py-1 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1.5 ${
                   activeTab === "daily"
                     ? "bg-white dark:bg-gray-800 text-teal-600 dark:text-orange-400 shadow-sm"
                     : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
@@ -453,7 +462,7 @@ export const DailyReportModal = ({
               <button
                 type="button"
                 onClick={() => setActiveTab("monthly")}
-                className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${
+                className={`flex-1 sm:flex-initial px-3 py-1 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1.5 ${
                   activeTab === "monthly"
                     ? "bg-white dark:bg-gray-800 text-teal-600 dark:text-orange-400 shadow-sm"
                     : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
@@ -467,7 +476,7 @@ export const DailyReportModal = ({
             <button
               type="button"
               onClick={onClose}
-              className="p-2 rounded-xl text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              className="hidden sm:flex p-2 rounded-xl text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
@@ -475,7 +484,7 @@ export const DailyReportModal = ({
         </div>
 
         {/* Customization Bar */}
-        <div className="px-6 py-3 bg-gray-50/70 dark:bg-gray-900/40 border-b border-gray-100 dark:border-gray-700/40 flex flex-wrap items-center justify-between gap-2.5">
+        <div className="px-4 sm:px-6 py-2.5 sm:py-3 bg-gray-50/70 dark:bg-gray-900/40 border-b border-gray-100 dark:border-gray-700/40 flex flex-wrap items-center justify-between gap-2">
           {/* Left: Date / Month Selectors */}
           {activeTab === "daily" ? (
             <div className="flex items-center gap-1.5">
@@ -517,7 +526,7 @@ export const DailyReportModal = ({
               <button
                 type="button"
                 onClick={handleCurrentMonth}
-                className="px-2.5 py-0.5 text-xs font-bold text-teal-600 dark:text-orange-400 tracking-tight"
+                className="px-2 py-0.5 text-xs font-bold text-teal-600 dark:text-orange-400 tracking-tight"
                 title="Reset to current month"
               >
                 {format(selectedMonth, "MMMM yyyy")}
@@ -553,12 +562,12 @@ export const DailyReportModal = ({
               onClick={() => setOnlyCompleted((prev) => !prev)}
               className={`text-[11px] px-2 py-1 rounded-lg font-medium border transition-all ${
                 onlyCompleted
-                  ? "bg-emerald-500/15 border-emerald-500/40 text-emerald-700 dark:text-emerald-400 font-semibold"
+                  ? "bg-teal-500/15 dark:bg-orange-500/15 border-teal-500/40 text-teal-700 dark:text-orange-400 font-semibold"
                   : "bg-white dark:bg-gray-800 text-gray-500 border-gray-200 dark:border-gray-700"
               }`}
-              title="Show only completed tasks in report"
+              title="Include only completed tasks"
             >
-              Completed Only {onlyCompleted ? "✓" : ""}
+              Only Completed {onlyCompleted ? "✓" : ""}
             </button>
 
             {activeTab === "monthly" && (
@@ -568,23 +577,22 @@ export const DailyReportModal = ({
                   onClick={() => setIncludeDates((prev) => !prev)}
                   className={`text-[11px] px-2 py-1 rounded-lg font-medium border transition-all ${
                     includeDates
-                      ? "bg-indigo-500/15 border-indigo-500/40 text-indigo-700 dark:text-indigo-400 font-semibold"
+                      ? "bg-teal-500/15 dark:bg-orange-500/15 border-teal-500/40 text-teal-700 dark:text-orange-400 font-semibold"
                       : "bg-white dark:bg-gray-800 text-gray-500 border-gray-200 dark:border-gray-700"
                   }`}
-                  title="Prefix task with date [dd-MM-yyyy]"
+                  title="Include dates next to tasks"
                 >
-                  Show Dates {includeDates ? "✓" : ""}
+                  Dates {includeDates ? "✓" : ""}
                 </button>
-
                 <button
                   type="button"
                   onClick={() => setIncludeSummary((prev) => !prev)}
                   className={`text-[11px] px-2 py-1 rounded-lg font-medium border transition-all ${
                     includeSummary
-                      ? "bg-purple-500/15 border-purple-500/40 text-purple-700 dark:text-purple-400 font-semibold"
+                      ? "bg-teal-500/15 dark:bg-orange-500/15 border-teal-500/40 text-teal-700 dark:text-orange-400 font-semibold"
                       : "bg-white dark:bg-gray-800 text-gray-500 border-gray-200 dark:border-gray-700"
                   }`}
-                  title="Include summary statistics"
+                  title="Include monthly completion statistics header"
                 >
                   Summary {includeSummary ? "✓" : ""}
                 </button>
@@ -594,8 +602,8 @@ export const DailyReportModal = ({
             <button
               type="button"
               onClick={handleRegenerate}
-              className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-              title="Reset / Regenerate fresh text"
+              className="p-1 rounded-lg text-gray-500 hover:text-teal-600 dark:hover:text-orange-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              title="Regenerate Report"
             >
               <RotateCcw className="w-3.5 h-3.5" />
             </button>
@@ -603,32 +611,32 @@ export const DailyReportModal = ({
         </div>
 
         {/* Editable Text Area Box */}
-        <div className="p-6 flex-grow flex flex-col min-h-0 space-y-2">
+        <div className="p-4 sm:p-6 flex-grow flex flex-col min-h-0 space-y-2">
           <div className="flex items-center justify-between text-xs text-gray-400 px-1">
-            <span>You can directly edit the report below:</span>
+            <span>Edit report directly:</span>
             <span>
               {reportText.split("\n").length} lines • {reportText.length}{" "}
-              characters
+              chars
             </span>
           </div>
 
           <textarea
             value={reportText}
             onChange={(e) => setReportText(e.target.value)}
-            rows={12}
-            className="w-full flex-grow p-4 text-sm font-mono leading-relaxed rounded-2xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-teal-500/40 dark:focus:ring-orange-400/40 text-gray-800 dark:text-gray-100 resize-none transition-all shadow-inner"
+            rows={10}
+            className="w-full flex-grow p-3 sm:p-4 text-xs sm:text-sm font-mono leading-relaxed rounded-2xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-teal-500/40 dark:focus:ring-orange-400/40 text-gray-800 dark:text-gray-100 resize-none transition-all shadow-inner"
             placeholder="Report content..."
           />
         </div>
 
         {/* Modal Footer with Copy Button */}
-        <div className="p-4 px-6 bg-gray-50/80 dark:bg-gray-900/60 border-t border-gray-100 dark:border-gray-700/60 flex items-center justify-between gap-3">
+        <div className="p-3.5 sm:p-4 px-4 sm:px-6 bg-gray-50/80 dark:bg-gray-900/60 border-t border-gray-100 dark:border-gray-700/60 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
           <Button
             type="button"
             variant="outline"
             size="sm"
             onClick={handleDownload}
-            className="rounded-xl text-xs gap-1.5 border-gray-200 dark:border-gray-700"
+            className="rounded-xl text-xs gap-1.5 border-gray-200 dark:border-gray-700 justify-center"
           >
             <Download className="w-3.5 h-3.5" />
             <span>Download .txt</span>
@@ -640,7 +648,7 @@ export const DailyReportModal = ({
               variant="ghost"
               size="sm"
               onClick={onClose}
-              className="rounded-xl text-xs"
+              className="rounded-xl text-xs flex-1 sm:flex-initial"
             >
               Close
             </Button>
@@ -649,7 +657,7 @@ export const DailyReportModal = ({
               type="button"
               size="sm"
               onClick={handleCopy}
-              className={`rounded-xl text-xs font-semibold gap-2 px-5 transition-all shadow-md active:scale-95 ${
+              className={`rounded-xl text-xs font-semibold gap-2 px-4 sm:px-5 py-2 transition-all shadow-md active:scale-95 flex-1 sm:flex-initial justify-center ${
                 copied
                   ? "bg-emerald-600 hover:bg-emerald-700 text-white"
                   : "bg-teal-500 hover:bg-teal-600 dark:bg-orange-400 dark:hover:bg-orange-500 text-white dark:text-gray-950"
@@ -658,7 +666,7 @@ export const DailyReportModal = ({
               {copied ? (
                 <>
                   <Check className="w-4 h-4" />
-                  <span>Copied to Clipboard!</span>
+                  <span>Copied!</span>
                 </>
               ) : (
                 <>

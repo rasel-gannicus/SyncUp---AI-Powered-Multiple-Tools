@@ -148,7 +148,7 @@ export const ProjectAutocomplete = ({
 
       {/* Floating Suggestions Dropdown */}
       {isOpen && (
-        <div className="absolute top-full left-0 mt-1.5 w-64 max-h-64 overflow-y-auto z-50 bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl shadow-xl border border-purple-100 dark:border-gray-700 p-1.5 animate-in fade-in-0 zoom-in-95 duration-150">
+        <div className="absolute top-full left-0 mt-1.5 w-64 max-w-[calc(100vw-2.5rem)] max-h-64 overflow-y-auto z-50 bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl shadow-xl border border-purple-100 dark:border-gray-700 p-1.5 animate-in fade-in-0 zoom-in-95 duration-150">
           {/* Header */}
           <div className="px-2.5 py-1.5 flex items-center justify-between text-[11px] font-semibold text-gray-400 dark:text-gray-400 border-b border-gray-100 dark:border-gray-700/60 mb-1">
             <span>PROJECT SUGGESTIONS</span>
