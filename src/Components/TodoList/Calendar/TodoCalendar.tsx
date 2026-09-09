@@ -27,6 +27,7 @@ interface TodoCalendarProps {
   selectedDate: Date;
   onSelectDate: (date: Date) => void;
   todos: any[];
+  className?: string;
 }
 
 const MONTH_NAMES = [
@@ -48,6 +49,7 @@ export const TodoCalendar: React.FC<TodoCalendarProps> = ({
   selectedDate,
   onSelectDate,
   todos = [],
+  className = "",
 }) => {
   const [currentMonth, setCurrentMonth] = useState<Date>(selectedDate);
   const [isMonthPickerOpen, setIsMonthPickerOpen] = useState(false);
@@ -168,7 +170,7 @@ export const TodoCalendar: React.FC<TodoCalendarProps> = ({
   const weekDayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
   return (
-    <div className="w-full bg-white dark:bg-gray-800/90 backdrop-blur-sm rounded-2xl p-5 shadow-lg border border-gray-100 dark:border-gray-700/60 transition-all duration-300 relative">
+    <div className={`w-full bg-white dark:bg-gray-800/90 backdrop-blur-sm rounded-2xl sm:rounded-3xl p-4 sm:p-5 shadow-lg border border-gray-100 dark:border-gray-700/60 transition-all duration-300 relative ${className}`}>
       {/* Calendar Header */}
       <div className="flex items-center justify-between mb-4 pb-3 border-b border-gray-100 dark:border-gray-700/50">
         <div className="flex items-center gap-2">
@@ -300,11 +302,11 @@ export const TodoCalendar: React.FC<TodoCalendarProps> = ({
       ) : (
         <>
           {/* Weekday Names Header */}
-          <div className="grid grid-cols-7 gap-1 mb-2 text-center">
+          <div className="grid grid-cols-7 gap-1 mb-1.5 text-center">
             {weekDayNames.map((name, index) => (
               <div
                 key={name}
-                className={`text-xs font-semibold py-1 uppercase tracking-wider ${
+                className={`text-[11px] sm:text-xs font-semibold py-0.5 uppercase tracking-wider ${
                   index === 0 || index === 6
                     ? "text-rose-500/80 dark:text-rose-400/80"
                     : "text-gray-400 dark:text-gray-400"
@@ -329,7 +331,7 @@ export const TodoCalendar: React.FC<TodoCalendarProps> = ({
                   key={day.toISOString()}
                   type="button"
                   onClick={() => handleDateClick(day)}
-                  className={`group relative flex flex-col items-center justify-center p-1 sm:p-2 rounded-xl transition-all duration-200 min-h-[44px] sm:min-h-[48px] text-xs sm:text-sm font-medium focus:outline-none ${
+                  className={`group relative flex flex-col items-center justify-center p-1 rounded-xl transition-all duration-200 min-h-[36px] sm:min-h-[38px] md:min-h-[40px] text-xs sm:text-sm font-medium focus:outline-none ${
                     isSelected
                       ? "bg-teal-500 text-white shadow-md shadow-teal-500/30 dark:bg-orange-400 dark:text-gray-950 dark:shadow-orange-500/20 scale-[1.03] font-bold z-10"
                       : isCurrentDay
@@ -342,7 +344,7 @@ export const TodoCalendar: React.FC<TodoCalendarProps> = ({
                   <span>{format(day, "d")}</span>
 
                   {/* Task Indicator Dot / Badge */}
-                  <div className="flex items-center justify-center gap-0.5 mt-0.5 h-1.5">
+                  <div className="flex items-center justify-center gap-0.5 mt-0.5 h-1">
                     {dayStats && dayStats.total > 0 && (
                       <>
                         {dayStats.pending > 0 ? (
@@ -375,7 +377,7 @@ export const TodoCalendar: React.FC<TodoCalendarProps> = ({
           </div>
 
           {/* Quick Legend / Footer */}
-          <div className="mt-4 pt-3 border-t border-gray-100 dark:border-gray-700/40 flex items-center justify-between text-[11px] text-gray-500 dark:text-gray-400">
+          <div className="mt-3 pt-2.5 border-t border-gray-100 dark:border-gray-700/40 flex items-center justify-between text-[11px] text-gray-500 dark:text-gray-400">
             <div className="flex items-center gap-3">
               <span className="flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full bg-amber-500 dark:bg-orange-400" />
