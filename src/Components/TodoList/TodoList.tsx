@@ -845,7 +845,7 @@ export const TodoList = ({ user }: { user: any }) => {
   const priorityLevels: PriorityLevel[] = ["Low", "Medium", "High", "Urgent"];
 
   return (
-    <div className="w-full max-w-6xl mx-auto px-3 sm:px-6 py-4 sm:py-10 transition-colors w-full min-w-0 max-w-full">
+    <div className="w-full max-w-6xl mx-auto px-3 sm:px-6 py-4 sm:py-10 transition-colors min-w-0 overflow-hidden">
       {/* Top Row: Side-by-Side Hero Banner & Compact Calendar on Desktop */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6 mb-6 sm:mb-8 items-stretch w-full min-w-0">
         {/* Left: Hero Banner & Summary Info (7 Columns on Desktop) */}
@@ -910,7 +910,7 @@ export const TodoList = ({ user }: { user: any }) => {
       </div>
 
       {/* Row 2: Full-Width Task Management Workspace */}
-      <div className="w-full max-w-full min-w-0 bg-white dark:bg-gray-800/90 backdrop-blur-sm rounded-2xl sm:rounded-3xl p-3.5 sm:p-7 shadow-lg border border-gray-100 dark:border-gray-700/60 space-y-4 sm:space-y-6">
+      <div className="w-full min-w-0 overflow-hidden bg-white dark:bg-gray-800/90 backdrop-blur-sm rounded-2xl sm:rounded-3xl p-3.5 sm:p-7 shadow-lg border border-gray-100 dark:border-gray-700/60 space-y-4 sm:space-y-6">
         {/* Header of Task Panel */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 sm:pb-4 border-b border-gray-100 dark:border-gray-700/50 min-w-0">
             <div>
@@ -1025,7 +1025,7 @@ export const TodoList = ({ user }: { user: any }) => {
             </div>
 
             {/* Clickable Entities Row: Status Metrics + Priority Breakdown Entities */}
-            <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-7 gap-1.5 sm:gap-2 pt-0.5 w-full min-w-0 max-w-full">
+            <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-7 gap-1.5 sm:gap-2 pt-0.5 w-full min-w-0">
               {/* Total Tasks (Click to show all) */}
               <button
                 type="button"
@@ -1250,9 +1250,9 @@ export const TodoList = ({ user }: { user: any }) => {
             )}
 
             {/* Priority & Status & Project Selector & Scheduled Info Bar */}
-            <div className="flex flex-col gap-2.5 pt-1 w-full min-w-0 max-w-full">
+            <div className="flex flex-col gap-2.5 pt-1 w-full min-w-0">
               {/* Status & Priority Row: Wraps gracefully on mobile */}
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-2 w-full min-w-0 max-w-full">
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-2 w-full min-w-0">
                 {/* Status Selection: Pending vs Completed (Default: Completed) */}
                 <div className="flex flex-wrap items-center gap-1 sm:gap-1.5">
                   <span className="text-[11px] font-semibold text-gray-500 dark:text-gray-400 flex items-center gap-1 mr-0.5">
@@ -1340,7 +1340,7 @@ export const TodoList = ({ user }: { user: any }) => {
 
             {/* Quick suggested project chips if available */}
             {availableProjects.length > 0 && (
-              <div className="w-full max-w-full min-w-0 overflow-x-auto scrollbar-none pt-1 pb-0.5">
+              <div className="w-full min-w-0 overflow-x-auto scrollbar-none pt-1 pb-0.5">
                 <div className="inline-flex items-center gap-1.5 sm:gap-2 whitespace-nowrap min-w-max">
                   <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 flex items-center gap-1.5 whitespace-nowrap flex-shrink-0">
                     <Tag className="w-3.5 h-3.5 text-purple-500" /> Quick Project:
@@ -1374,7 +1374,7 @@ export const TodoList = ({ user }: { user: any }) => {
 
           {/* Project Filter Pills & Manage Button */}
           {availableProjects.length > 0 && (
-            <div className="w-full max-w-full min-w-0 overflow-x-auto scrollbar-none border-t border-gray-100 dark:border-gray-700/40 pt-1.5 pb-0.5">
+            <div className="w-full min-w-0 overflow-x-auto scrollbar-none border-t border-gray-100 dark:border-gray-700/40 pt-1.5 pb-0.5">
               <div className="inline-flex items-center gap-1.5 whitespace-nowrap min-w-max">
                 <span className="text-[11px] font-semibold text-gray-500 dark:text-gray-400 flex items-center gap-1 flex-shrink-0">
                   <FolderKanban className="w-3.5 h-3.5 text-purple-500" /> Projects:
