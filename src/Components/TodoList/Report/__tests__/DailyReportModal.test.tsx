@@ -5,6 +5,7 @@ import {
   generateDailyReportText,
   generateMonthlyReportText,
   generateCustomDateReportText,
+  formatCombinedDatesHeader,
 } from "../DailyReportModal";
 
 describe("DailyReportModal & Report Generator", () => {
@@ -122,6 +123,35 @@ describe("DailyReportModal & Report Generator", () => {
 
       expect(report).toContain("No dates selected");
     });
+
+    it("formats combined date header accurately for single and multiple months", () => {
+      expect(
+        formatCombinedDatesHeader(["2026-09-10", "2026-09-11", "2026-09-12"])
+      ).toBe("Update 10, 11, 12 September");
+
+      expect(
+        formatCombinedDatesHeader(["2026-09-30", "2026-10-01"])
+      ).toBe("Update 30 September, 1 October");
+    });
+
+    it("combines tasks across multiple dates under single project headers when combineTasks is true", () => {
+      const report = generateCustomDateReportText({
+        todos: sampleTodos,
+        dates: ["2026-09-07", "2026-09-08"],
+        includeOngoingTag: true,
+        combineTasks: true,
+      });
+
+      expect(report).toContain("Update 7, 8 September");
+      expect(report).toContain("Project : SyncUp Redesign");
+      expect(report).toContain("Design dashboard wireframe");
+      expect(report).toContain("Write Jest tests (status: ongoing)");
+      expect(report).toContain("Project : Old Project");
+      expect(report).toContain("Old task from yesterday");
+      // Header shouldn't repeat
+      expect(report).not.toContain("Update 7th september");
+      expect(report).not.toContain("Update 8th september");
+    });
   });
 
   describe("DailyReportModal UI", () => {
@@ -199,6 +229,22 @@ describe("DailyReportModal & Report Generator", () => {
 
       // Now "Pick More Dates" button is visible
       expect(screen.getByText(/Pick More Dates/i)).toBeInTheDocument();
+    });
+
+    it("should toggle combine tasks format when clicking Combine tasks button", () => {
+      render(<DailyReportModal {...defaultProps} initialTab="custom" />);
+
+      // Initially shows separate date header
+      let textarea = screen.getByRole("textbox") as HTMLTextAreaElement;
+      expect(textarea.value).toContain("Update 8th september");
+
+      // Click Combine tasks
+      const combineBtn = screen.getByRole("button", { name: /Combine tasks/i });
+      fireEvent.click(combineBtn);
+
+      // Textarea now shows combined header format
+      textarea = screen.getByRole("textbox") as HTMLTextAreaElement;
+      expect(textarea.value).toContain("Update 8 September");
     });
   });
 });

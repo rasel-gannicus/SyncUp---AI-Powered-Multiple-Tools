@@ -272,12 +272,56 @@ export const generateMonthlyReportText = ({
 };
 
 /**
+ * Formats combined date header:
+ * If same month: "Update 10, 11, 12 September"
+ * If different months: "Update 30 September, 1, 2 October"
+ */
+export const formatCombinedDatesHeader = (sortedDateKeys: string[]): string => {
+  if (!sortedDateKeys || sortedDateKeys.length === 0) return "Update";
+
+  // Group day numbers by month & year
+  const monthGroups: { monthName: string; year: number; days: number[] }[] = [];
+
+  sortedDateKeys.forEach((dateKey) => {
+    const [y, m, d] = dateKey.split("-").map(Number);
+    const dateObj = new Date(y, m - 1, d);
+    const monthName = format(dateObj, "MMMM");
+
+    let lastGroup = monthGroups[monthGroups.length - 1];
+    if (
+      !lastGroup ||
+      lastGroup.monthName !== monthName ||
+      lastGroup.year !== y
+    ) {
+      lastGroup = { monthName, year: y, days: [] };
+      monthGroups.push(lastGroup);
+    }
+    if (!lastGroup.days.includes(d)) {
+      lastGroup.days.push(d);
+    }
+  });
+
+  const parts = monthGroups.map((group) => {
+    return `${group.days.join(", ")} ${group.monthName}`;
+  });
+
+  return `Update ${parts.join(", ")}`;
+};
+
+/**
  * Generates Custom Multi-Date Report Text matching user's project-wise format:
- * Update {day-ordinal} {month}
+ * When combineTasks is false:
+ * Update 10th september
  * Project : {project}
  * • {task} (status: ongoing)
  *
- * Update {day-ordinal} {month}
+ * Update 11th september
+ * ...
+ *
+ * When combineTasks is true:
+ * Update 10, 11 September
+ * Project : {project}
+ * • {task} (status: ongoing)
  * ...
  */
 export const generateCustomDateReportText = ({
@@ -285,11 +329,13 @@ export const generateCustomDateReportText = ({
   dates,
   includeOngoingTag = true,
   onlyCompleted = false,
+  combineTasks = false,
 }: {
   todos: any[];
   dates: string[];
   includeOngoingTag?: boolean;
   onlyCompleted?: boolean;
+  combineTasks?: boolean;
 }): string => {
   if (!dates || dates.length === 0) {
     return "• No dates selected. Please pick one or more dates from the calendar.";
@@ -315,6 +361,80 @@ export const generateCustomDateReportText = ({
   };
 
   const sortedDates = [...dates].sort();
+
+  // If combineTasks is true: unified header and merged project groups
+  if (combineTasks) {
+    const header = formatCombinedDatesHeader(sortedDates);
+
+    const relevantTodos = nonDeleted.filter((t: any) =>
+      sortedDates.includes(getTodoDateKey(t))
+    );
+
+    const filtered = onlyCompleted
+      ? relevantTodos.filter((t: any) => t.completed)
+      : relevantTodos;
+
+    // Deduplicate by ID if present
+    const seenIds = new Set();
+    const uniqueTodos = filtered.filter((t: any) => {
+      const id = t.id || t._id;
+      if (id) {
+        if (seenIds.has(id)) return false;
+        seenIds.add(id);
+      }
+      return true;
+    });
+
+    const projectGroups: Record<string, any[]> = {};
+    const noProjectTasks: any[] = [];
+
+    uniqueTodos.forEach((t: any) => {
+      const proj =
+        t.project && typeof t.project === "string" && t.project.trim();
+      if (proj) {
+        if (!projectGroups[proj]) {
+          projectGroups[proj] = [];
+        }
+        projectGroups[proj].push(t);
+      } else {
+        noProjectTasks.push(t);
+      }
+    });
+
+    const lines: string[] = [header];
+
+    Object.keys(projectGroups).forEach((proj) => {
+      lines.push(`Project : ${proj}`);
+      projectGroups[proj].forEach((t: any) => {
+        let line = `• ${t.text}`;
+        if (includeOngoingTag && !t.completed) {
+          line += ` (status: ongoing)`;
+        }
+        lines.push(line);
+      });
+    });
+
+    if (noProjectTasks.length > 0) {
+      if (Object.keys(projectGroups).length > 0) {
+        lines.push(`Project : General`);
+      }
+      noProjectTasks.forEach((t: any) => {
+        let line = `• ${t.text}`;
+        if (includeOngoingTag && !t.completed) {
+          line += ` (status: ongoing)`;
+        }
+        lines.push(line);
+      });
+    }
+
+    if (uniqueTodos.length === 0) {
+      lines.push(`• No tasks scheduled for these dates.`);
+    }
+
+    return lines.join("\n");
+  }
+
+  // If combineTasks is false: separate sections by date
   const sections: string[] = [];
 
   sortedDates.forEach((dateKey) => {
@@ -412,6 +532,7 @@ export const DailyReportModal = ({
   ]);
   const [isCalendarOpen, setIsCalendarOpen] = useState(true);
   const [calendarMonth, setCalendarMonth] = useState<Date>(selectedDate);
+  const [combineTasks, setCombineTasks] = useState(false);
 
   // Shared toggles
   const [includeOngoingTag, setIncludeOngoingTag] = useState(true);
@@ -426,6 +547,7 @@ export const DailyReportModal = ({
       setCalendarMonth(selectedDate);
       setSelectedCustomDates([format(selectedDate, "yyyy-MM-dd")]);
       setIsCalendarOpen(true);
+      setCombineTasks(false);
       setCopied(false);
     }
   }, [isOpen, initialTab, filterMode, selectedDate]);
@@ -459,6 +581,7 @@ export const DailyReportModal = ({
         dates: selectedCustomDates,
         includeOngoingTag,
         onlyCompleted,
+        combineTasks,
       });
       setReportText(text);
     }
@@ -472,6 +595,7 @@ export const DailyReportModal = ({
     selectedCustomDates,
     includeOngoingTag,
     onlyCompleted,
+    combineTasks,
     includeDates,
     includeSummary,
   ]);
@@ -503,6 +627,7 @@ export const DailyReportModal = ({
         dates: selectedCustomDates,
         includeOngoingTag,
         onlyCompleted,
+        combineTasks,
       });
       setReportText(text);
     }
@@ -671,10 +796,11 @@ export const DailyReportModal = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-2.5 sm:p-4 bg-black/60 backdrop-blur-sm animate-in fade-in-0 duration-200">
       <div className="bg-white dark:bg-gray-800 rounded-2xl sm:rounded-3xl shadow-2xl border border-gray-100 dark:border-gray-700/80 w-full max-w-2xl overflow-hidden flex flex-col max-h-[92vh]">
         {/* Modal Header */}
-        <div className="p-4 sm:p-6 pb-3 sm:pb-4 border-b border-gray-100 dark:border-gray-700/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="flex items-center justify-between w-full sm:w-auto">
-            <div className="flex items-center gap-2.5 sm:gap-3">
-              <div className="p-2 sm:p-2.5 rounded-2xl bg-teal-500/10 dark:bg-orange-500/15 text-teal-600 dark:text-orange-400">
+        <div className="p-4 sm:p-5 pb-3 sm:pb-3.5 border-b border-gray-100 dark:border-gray-700/60 flex flex-col gap-3">
+          {/* Top Row: Title, Subtitle, and Close Button */}
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+              <div className="p-2 sm:p-2.5 rounded-2xl bg-teal-500/10 dark:bg-orange-500/15 text-teal-600 dark:text-orange-400 flex-shrink-0">
                 {activeTab === "daily" ? (
                   <FileText className="w-5 h-5 sm:w-6 sm:h-6" />
                 ) : activeTab === "monthly" ? (
@@ -683,8 +809,8 @@ export const DailyReportModal = ({
                   <Calendar className="w-5 h-5 sm:w-6 sm:h-6" />
                 )}
               </div>
-              <div>
-                <div className="flex items-center gap-1.5 sm:gap-2">
+              <div className="min-w-0">
+                <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
                   <h3 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white tracking-tight">
                     {activeTab === "daily"
                       ? "Daily Task Report"
@@ -692,15 +818,15 @@ export const DailyReportModal = ({
                       ? "Monthly Task Report"
                       : "Custom Date Task Report"}
                   </h3>
-                  <span className="text-[10px] sm:text-[11px] px-1.5 sm:px-2 py-0.5 rounded-md bg-teal-500/10 dark:bg-orange-500/15 text-teal-600 dark:text-orange-400 font-semibold flex items-center gap-1">
+                  <span className="text-[10px] sm:text-[11px] px-1.5 sm:px-2 py-0.5 rounded-md bg-teal-500/10 dark:bg-orange-500/15 text-teal-600 dark:text-orange-400 font-semibold flex items-center gap-1 whitespace-nowrap">
                     <Sparkles className="w-3 h-3" /> Ready to share
                   </span>
                 </div>
-                <p className="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400">
+                <p className="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400 truncate">
                   {activeTab === "custom"
                     ? `Multi-date report (${selectedCustomDates.length} date${
                         selectedCustomDates.length === 1 ? "" : "s"
-                      } selected). Pick dates below.`
+                      } selected${combineTasks ? " • Combined" : ""}). Pick dates below.`
                     : "Formatted project-wise report. Edit & copy below."}
                 </p>
               </div>
@@ -709,62 +835,54 @@ export const DailyReportModal = ({
             <button
               type="button"
               onClick={onClose}
-              className="sm:hidden p-1.5 rounded-xl text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              aria-label="Close modal"
+              className="p-1.5 rounded-xl text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex-shrink-0"
+              title="Close"
             >
               <X className="w-5 h-5" />
             </button>
           </div>
 
-          <div className="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto">
-            {/* Tab switch between Daily, Monthly, and Custom Date */}
-            <div className="flex items-center bg-gray-100 dark:bg-gray-700/60 p-1 rounded-xl w-full sm:w-auto">
-              <button
-                type="button"
-                onClick={() => setActiveTab("daily")}
-                className={`flex-1 sm:flex-initial px-2.5 sm:px-3 py-1 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1.5 ${
-                  activeTab === "daily"
-                    ? "bg-white dark:bg-gray-800 text-teal-600 dark:text-orange-400 shadow-sm"
-                    : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
-                }`}
-              >
-                <FileText className="w-3.5 h-3.5" />
-                <span>Daily</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveTab("monthly")}
-                className={`flex-1 sm:flex-initial px-2.5 sm:px-3 py-1 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1.5 ${
-                  activeTab === "monthly"
-                    ? "bg-white dark:bg-gray-800 text-teal-600 dark:text-orange-400 shadow-sm"
-                    : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
-                }`}
-              >
-                <CalendarDays className="w-3.5 h-3.5" />
-                <span>Monthly</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setActiveTab("custom");
-                  setIsCalendarOpen(true);
-                }}
-                className={`flex-1 sm:flex-initial px-2.5 sm:px-3 py-1 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1.5 ${
-                  activeTab === "custom"
-                    ? "bg-white dark:bg-gray-800 text-teal-600 dark:text-orange-400 shadow-sm"
-                    : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
-                }`}
-              >
-                <Calendar className="w-3.5 h-3.5" />
-                <span>Custom Date</span>
-              </button>
-            </div>
-
+          {/* Tab switch row: moved one step bottom for ample room */}
+          <div className="flex items-center bg-gray-100 dark:bg-gray-700/60 p-1 rounded-xl w-full">
             <button
               type="button"
-              onClick={onClose}
-              className="hidden sm:flex p-2 rounded-xl text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              onClick={() => setActiveTab("daily")}
+              className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1.5 whitespace-nowrap ${
+                activeTab === "daily"
+                  ? "bg-white dark:bg-gray-800 text-teal-600 dark:text-orange-400 shadow-sm"
+                  : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+              }`}
             >
-              <X className="w-5 h-5" />
+              <FileText className="w-3.5 h-3.5 flex-shrink-0" />
+              <span>Daily</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("monthly")}
+              className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1.5 whitespace-nowrap ${
+                activeTab === "monthly"
+                  ? "bg-white dark:bg-gray-800 text-teal-600 dark:text-orange-400 shadow-sm"
+                  : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+              }`}
+            >
+              <CalendarDays className="w-3.5 h-3.5 flex-shrink-0" />
+              <span>Monthly</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setActiveTab("custom");
+                setIsCalendarOpen(true);
+              }}
+              className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1.5 whitespace-nowrap ${
+                activeTab === "custom"
+                  ? "bg-white dark:bg-gray-800 text-teal-600 dark:text-orange-400 shadow-sm"
+                  : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+              }`}
+            >
+              <Calendar className="w-3.5 h-3.5 flex-shrink-0" />
+              <span>Custom Date</span>
             </button>
           </div>
         </div>
@@ -871,6 +989,21 @@ export const DailyReportModal = ({
 
           {/* Right: Tag and Filter toggles */}
           <div className="flex flex-wrap items-center gap-1.5">
+            {activeTab === "custom" && (
+              <button
+                type="button"
+                onClick={() => setCombineTasks((prev) => !prev)}
+                className={`text-[11px] px-2 py-1 rounded-lg font-medium border transition-all ${
+                  combineTasks
+                    ? "bg-teal-500/15 dark:bg-orange-500/15 border-teal-500/40 text-teal-700 dark:text-orange-400 font-semibold"
+                    : "bg-white dark:bg-gray-800 text-gray-500 border-gray-200 dark:border-gray-700"
+                }`}
+                title="Combine all dates into a single project list (e.g. Update 10, 11, 12 September)"
+              >
+                Combine tasks {combineTasks ? "✓" : ""}
+              </button>
+            )}
+
             <button
               type="button"
               onClick={() => setIncludeOngoingTag((prev) => !prev)}
