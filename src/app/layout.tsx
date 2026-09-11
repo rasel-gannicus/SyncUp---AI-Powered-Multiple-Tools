@@ -9,7 +9,7 @@ import { Analytics } from "@vercel/analytics/react";
 import { PWARegister } from "@/Components/Shared/PWARegister";
 
 export const viewport: Viewport = {
-  themeColor: "#14b8a6",
+  themeColor: "#212528",
   width: "device-width",
   initialScale: 1,
   maximumScale: 5,

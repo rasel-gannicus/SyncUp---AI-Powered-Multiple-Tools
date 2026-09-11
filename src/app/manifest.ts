@@ -7,8 +7,8 @@ export default function manifest(): MetadataRoute.Manifest {
     description: "Organize, schedule, and prioritize your daily tasks with ease.",
     start_url: "/todoList",
     display: "standalone",
-    background_color: "#0f172a",
-    theme_color: "#14b8a6",
+    background_color: "#212528",
+    theme_color: "#212528",
     orientation: "any",
     icons: [
       {
