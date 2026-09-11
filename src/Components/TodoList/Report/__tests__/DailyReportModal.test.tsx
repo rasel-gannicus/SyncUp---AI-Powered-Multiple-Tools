@@ -4,6 +4,7 @@ import {
   DailyReportModal,
   generateDailyReportText,
   generateMonthlyReportText,
+  generateCustomDateReportText,
 } from "../DailyReportModal";
 
 describe("DailyReportModal & Report Generator", () => {
@@ -88,6 +89,41 @@ describe("DailyReportModal & Report Generator", () => {
     });
   });
 
+  describe("generateCustomDateReportText helper", () => {
+    it("generates report for multiple custom dates in chronological order", () => {
+      const report = generateCustomDateReportText({
+        todos: sampleTodos,
+        dates: ["2026-09-08", "2026-09-07"],
+        includeOngoingTag: true,
+      });
+
+      expect(report).toContain("Update 7th september");
+      expect(report).toContain("Old task from yesterday");
+      expect(report).toContain("Update 8th september");
+      expect(report).toContain("Design dashboard wireframe");
+      expect(report).toContain("Write Jest tests (status: ongoing)");
+    });
+
+    it("handles dates with no tasks scheduled", () => {
+      const report = generateCustomDateReportText({
+        todos: sampleTodos,
+        dates: ["2026-09-15"],
+      });
+
+      expect(report).toContain("Update 15th september");
+      expect(report).toContain("No tasks scheduled for this date.");
+    });
+
+    it("returns prompt when no dates are passed", () => {
+      const report = generateCustomDateReportText({
+        todos: sampleTodos,
+        dates: [],
+      });
+
+      expect(report).toContain("No dates selected");
+    });
+  });
+
   describe("DailyReportModal UI", () => {
     const defaultProps = {
       isOpen: true,
@@ -112,19 +148,38 @@ describe("DailyReportModal & Report Generator", () => {
       render(<DailyReportModal {...defaultProps} />);
       expect(screen.getByText("Daily Task Report")).toBeInTheDocument();
       expect(screen.getByText(/Ready to share/i)).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: /^Daily$/i })).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: /^Monthly$/i })).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: /^Daily$/i })
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: /^Monthly$/i })
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: /^Custom Date$/i })
+      ).toBeInTheDocument();
     });
 
-    it("should switch tabs between Daily and Monthly", () => {
+    it("should switch tabs between Daily, Monthly, and Custom Date", () => {
       render(<DailyReportModal {...defaultProps} />);
+
+      // Switch to Monthly
       const monthlyTabBtn = screen.getByRole("button", {
         name: /^Monthly$/i,
       });
       fireEvent.click(monthlyTabBtn);
 
-      const textarea = screen.getByRole("textbox") as HTMLTextAreaElement;
+      let textarea = screen.getByRole("textbox") as HTMLTextAreaElement;
       expect(textarea.value).toContain("Monthly Report");
+
+      // Switch to Custom Date
+      const customTabBtn = screen.getByRole("button", {
+        name: /^Custom Date$/i,
+      });
+      fireEvent.click(customTabBtn);
+
+      expect(screen.getByText("Custom Date Task Report")).toBeInTheDocument();
+      textarea = screen.getByRole("textbox") as HTMLTextAreaElement;
+      expect(textarea.value).toContain("Update 8th september");
     });
 
     it("should trigger onClose when close button is clicked", () => {
@@ -132,6 +187,18 @@ describe("DailyReportModal & Report Generator", () => {
       const closeButtons = screen.getAllByRole("button", { name: /close/i });
       fireEvent.click(closeButtons[0]);
       expect(defaultProps.onClose).toHaveBeenCalledTimes(1);
+    });
+
+    it("should allow toggling calendar visibility in custom date mode", () => {
+      render(<DailyReportModal {...defaultProps} initialTab="custom" />);
+      expect(screen.getByText("Custom Date Task Report")).toBeInTheDocument();
+
+      // Done Selecting collapses the calendar
+      const doneBtn = screen.getByRole("button", { name: /Done Selecting/i });
+      fireEvent.click(doneBtn);
+
+      // Now "Pick More Dates" button is visible
+      expect(screen.getByText(/Pick More Dates/i)).toBeInTheDocument();
     });
   });
 });

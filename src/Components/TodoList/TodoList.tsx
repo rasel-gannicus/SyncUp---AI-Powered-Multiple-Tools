@@ -111,7 +111,7 @@ export const TodoList = ({ user }: { user: any }) => {
   const [selectedProjectFilter, setSelectedProjectFilter] = useState<string>("all");
   const [isProjectManagerOpen, setIsProjectManagerOpen] = useState(false);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
-  const [reportInitialTab, setReportInitialTab] = useState<"daily" | "monthly">("daily");
+  const [reportInitialTab, setReportInitialTab] = useState<"daily" | "monthly" | "custom">("daily");
   const [filter, setFilter] = useState<"all" | "active" | "completed">("all");
   const [entityFilter, setEntityFilter] = useState<ActiveEntityFilter>("total");
   const [filterMode, setFilterMode] = useState<"date" | "all">("date");
@@ -930,18 +930,18 @@ export const TodoList = ({ user }: { user: any }) => {
 
             {/* Actions: Daily Report + Monthly Report + View Mode Switcher */}
             <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full sm:w-auto min-w-0">
-              <div className="grid grid-cols-2 sm:flex items-center gap-1.5 w-full sm:w-auto min-w-0">
+              <div className="grid grid-cols-3 sm:flex items-center gap-1.5 w-full sm:w-auto min-w-0">
                 <Button
                   type="button"
                   onClick={() => {
                     setReportInitialTab("daily");
                     setIsReportModalOpen(true);
                   }}
-                  className="bg-gradient-to-r from-teal-500 to-emerald-600 dark:from-orange-400 dark:to-amber-500 hover:opacity-90 text-white dark:text-gray-950 px-2 sm:px-3 py-1.5 h-8 rounded-xl text-xs font-bold shadow-sm flex items-center justify-center gap-1 sm:gap-1.5 transition-all active:scale-95 min-w-0"
+                  className="bg-gradient-to-r from-teal-500 to-emerald-600 dark:from-orange-400 dark:to-amber-500 hover:opacity-90 text-white dark:text-gray-950 px-1.5 sm:px-3 py-1.5 h-8 rounded-xl text-xs font-bold shadow-sm flex items-center justify-center gap-1 sm:gap-1.5 transition-all active:scale-95 min-w-0"
                   title="Create and copy daily report"
                 >
                   <FileText className="w-3.5 h-3.5 flex-shrink-0" />
-                  <span className="truncate text-[11px] sm:text-xs">Daily Report</span>
+                  <span className="truncate text-[10px] sm:text-xs">Daily Report</span>
                 </Button>
 
                 <Button
@@ -950,11 +950,24 @@ export const TodoList = ({ user }: { user: any }) => {
                     setReportInitialTab("monthly");
                     setIsReportModalOpen(true);
                   }}
-                  className="bg-gradient-to-r from-indigo-500 to-blue-600 dark:from-amber-400 dark:to-orange-500 hover:opacity-90 text-white dark:text-gray-950 px-2 sm:px-3 py-1.5 h-8 rounded-xl text-xs font-bold shadow-sm flex items-center justify-center gap-1 sm:gap-1.5 transition-all active:scale-95 min-w-0"
+                  className="bg-gradient-to-r from-indigo-500 to-blue-600 dark:from-amber-400 dark:to-orange-500 hover:opacity-90 text-white dark:text-gray-950 px-1.5 sm:px-3 py-1.5 h-8 rounded-xl text-xs font-bold shadow-sm flex items-center justify-center gap-1 sm:gap-1.5 transition-all active:scale-95 min-w-0"
                   title="Create and copy monthly report"
                 >
                   <CalendarDays className="w-3.5 h-3.5 flex-shrink-0" />
-                  <span className="truncate text-[11px] sm:text-xs">Monthly Report</span>
+                  <span className="truncate text-[10px] sm:text-xs">Monthly Report</span>
+                </Button>
+
+                <Button
+                  type="button"
+                  onClick={() => {
+                    setReportInitialTab("custom");
+                    setIsReportModalOpen(true);
+                  }}
+                  className="bg-gradient-to-r from-purple-500 to-violet-600 dark:from-violet-400 dark:to-purple-500 hover:opacity-90 text-white dark:text-gray-950 px-1.5 sm:px-3 py-1.5 h-8 rounded-xl text-xs font-bold shadow-sm flex items-center justify-center gap-1 sm:gap-1.5 transition-all active:scale-95 min-w-0"
+                  title="Create report for custom dates"
+                >
+                  <CalendarIcon className="w-3.5 h-3.5 flex-shrink-0" />
+                  <span className="truncate text-[10px] sm:text-xs">Custom Date</span>
                 </Button>
               </div>
 
