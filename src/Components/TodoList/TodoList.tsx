@@ -60,6 +60,7 @@ import {
   saveCloudCachedTodos,
 } from "@/utils/storage/offlineStorage";
 import { DataModeSelector } from "./DataMode/DataModeSelector";
+import { useAutoSync } from "./DataMode/useAutoSync";
 
 export const PRIORITY_CONFIG: Record<
   PriorityLevel,
@@ -165,6 +166,19 @@ export const TodoList = ({ user }: { user: any }) => {
       return getLocalTodos(userEmail);
     }
     return userData?.todos || getCloudCachedTodos(userEmail) || [];
+  });
+
+  // Background Auto-Sync Hook for Local Storage Mode
+  const {
+    isAutoSyncEnabled,
+    setAutoSyncEnabled,
+    syncState,
+    unsyncedStatus,
+    triggerSyncNow,
+  } = useAutoSync({
+    storageMode,
+    user,
+    todos: todos || [],
   });
 
   // Sync state when userData arrives or storageMode changes
@@ -1115,7 +1129,7 @@ export const TodoList = ({ user }: { user: any }) => {
                   <span className="truncate text-[10px] sm:text-xs">Custom Date</span>
                 </Button>
 
-                {/* Data Storage Mode Selector (Cloud vs Local Storage) */}
+                {/* Data Storage Mode Selector (Cloud vs Local Storage) with Background Auto-Sync */}
                 <DataModeSelector
                   storageMode={storageMode}
                   onModeChange={handleModeChange}
@@ -1123,6 +1137,11 @@ export const TodoList = ({ user }: { user: any }) => {
                   todos={todos}
                   setTodos={setTodos}
                   userLoading={userLoading}
+                  isAutoSyncEnabled={isAutoSyncEnabled}
+                  onToggleAutoSync={setAutoSyncEnabled}
+                  syncState={syncState}
+                  unsyncedStatus={unsyncedStatus}
+                  triggerSyncNow={triggerSyncNow}
                 />
               </div>
 

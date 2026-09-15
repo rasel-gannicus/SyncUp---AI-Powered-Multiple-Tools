@@ -74,4 +74,27 @@ describe("DataModeSelector UI Component", () => {
     expect(screen.getByText("Export JSON")).toBeInTheDocument();
     expect(screen.getByText("Import JSON")).toBeInTheDocument();
   });
+
+  it("should render Background Auto-Sync banner and toggle in Local Mode", () => {
+    const onToggleAutoSync = jest.fn();
+    render(
+      <DataModeSelector
+        {...defaultProps}
+        storageMode="local"
+        isAutoSyncEnabled={true}
+        onToggleAutoSync={onToggleAutoSync}
+        unsyncedStatus={{ hasUnsyncedChanges: false, lastSyncedAt: Date.now() }}
+      />
+    );
+
+    const trigger = screen.getByRole("button", { name: /Local Mode/i });
+    fireEvent.click(trigger);
+
+    expect(screen.getByText("Background Auto-Sync")).toBeInTheDocument();
+    expect(screen.getByText(/Last synced:/i)).toBeInTheDocument();
+
+    const toggleBtn = screen.getByTitle("Disable background auto-sync");
+    fireEvent.click(toggleBtn);
+    expect(onToggleAutoSync).toHaveBeenCalledWith(false);
+  });
 });

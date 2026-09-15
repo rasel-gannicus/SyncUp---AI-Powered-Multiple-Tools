@@ -163,3 +163,90 @@ export const parseBackupJSON = async (file: File): Promise<any[]> => {
     reader.readAsText(file);
   });
 };
+
+const UNSYNCED_STATUS_KEY_PREFIX = "syncup_unsynced_status_";
+const AUTO_SYNC_ENABLED_KEY_PREFIX = "syncup_auto_sync_enabled_";
+
+export interface UnsyncedStatus {
+  hasUnsyncedChanges: boolean;
+  lastSyncedAt: number | null;
+}
+
+/**
+ * Get unsynced changes status and last synced timestamp
+ */
+export const getUnsyncedStatus = (email?: string): UnsyncedStatus => {
+  if (typeof window === "undefined") {
+    return { hasUnsyncedChanges: false, lastSyncedAt: null };
+  }
+  try {
+    const key = `${UNSYNCED_STATUS_KEY_PREFIX}${email || "guest"}`;
+    const raw = localStorage.getItem(key);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      return {
+        hasUnsyncedChanges: Boolean(parsed.hasUnsyncedChanges),
+        lastSyncedAt: typeof parsed.lastSyncedAt === "number" ? parsed.lastSyncedAt : null,
+      };
+    }
+  } catch (error) {
+    console.error("Error reading unsynced status:", error);
+  }
+  return { hasUnsyncedChanges: false, lastSyncedAt: null };
+};
+
+/**
+ * Set unsynced status
+ */
+export const setUnsyncedStatus = (
+  email: string | undefined,
+  hasUnsyncedChanges: boolean,
+  lastSyncedAt?: number
+): void => {
+  if (typeof window === "undefined") return;
+  try {
+    const key = `${UNSYNCED_STATUS_KEY_PREFIX}${email || "guest"}`;
+    const current = getUnsyncedStatus(email);
+    const newStatus: UnsyncedStatus = {
+      hasUnsyncedChanges,
+      lastSyncedAt: lastSyncedAt !== undefined ? lastSyncedAt : current.lastSyncedAt,
+    };
+    localStorage.setItem(key, JSON.stringify(newStatus));
+  } catch (error) {
+    console.error("Error setting unsynced status:", error);
+  }
+};
+
+/**
+ * Get Auto-Sync enabled preference (defaults to true)
+ */
+export const getAutoSyncEnabled = (email?: string): boolean => {
+  if (typeof window === "undefined") return true;
+  try {
+    const key = `${AUTO_SYNC_ENABLED_KEY_PREFIX}${email || "guest"}`;
+    const saved = localStorage.getItem(key);
+    if (saved !== null) {
+      return saved === "true";
+    }
+  } catch (error) {
+    console.error("Error reading auto sync setting:", error);
+  }
+  return true;
+};
+
+/**
+ * Set Auto-Sync enabled preference
+ */
+export const setAutoSyncEnabled = (
+  email: string | undefined,
+  enabled: boolean
+): void => {
+  if (typeof window === "undefined") return;
+  try {
+    const key = `${AUTO_SYNC_ENABLED_KEY_PREFIX}${email || "guest"}`;
+    localStorage.setItem(key, String(enabled));
+  } catch (error) {
+    console.error("Error setting auto sync setting:", error);
+  }
+};
+

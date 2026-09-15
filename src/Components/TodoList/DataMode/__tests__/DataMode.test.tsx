@@ -7,6 +7,10 @@ import {
   saveCloudCachedTodos,
   exportBackupJSON,
   parseBackupJSON,
+  getUnsyncedStatus,
+  setUnsyncedStatus,
+  getAutoSyncEnabled,
+  setAutoSyncEnabled,
 } from "@/utils/storage/offlineStorage";
 
 describe("Data Mode & Offline Storage Services", () => {
@@ -146,6 +150,40 @@ describe("Data Mode & Offline Storage Services", () => {
       await expect(parseBackupJSON(file)).rejects.toThrow(
         "Invalid backup format: No tasks array found."
       );
+    });
+  });
+
+  describe("Auto-Sync Preferences & Unsynced Status", () => {
+    it("should default auto-sync to true", () => {
+      expect(getAutoSyncEnabled("test@example.com")).toBe(true);
+    });
+
+    it("should save and retrieve auto-sync preference", () => {
+      setAutoSyncEnabled("test@example.com", false);
+      expect(getAutoSyncEnabled("test@example.com")).toBe(false);
+
+      setAutoSyncEnabled("test@example.com", true);
+      expect(getAutoSyncEnabled("test@example.com")).toBe(true);
+    });
+
+    it("should default unsynced changes to false", () => {
+      const status = getUnsyncedStatus("test@example.com");
+      expect(status.hasUnsyncedChanges).toBe(false);
+      expect(status.lastSyncedAt).toBeNull();
+    });
+
+    it("should save and update unsynced status and lastSyncedAt timestamp", () => {
+      const timestamp = 1726400000000;
+      setUnsyncedStatus("test@example.com", true, timestamp);
+
+      let status = getUnsyncedStatus("test@example.com");
+      expect(status.hasUnsyncedChanges).toBe(true);
+      expect(status.lastSyncedAt).toBe(timestamp);
+
+      setUnsyncedStatus("test@example.com", false);
+      status = getUnsyncedStatus("test@example.com");
+      expect(status.hasUnsyncedChanges).toBe(false);
+      expect(status.lastSyncedAt).toBe(timestamp); // preserves previous timestamp
     });
   });
 });

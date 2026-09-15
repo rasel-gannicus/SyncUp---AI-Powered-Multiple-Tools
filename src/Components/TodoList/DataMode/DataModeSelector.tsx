@@ -15,6 +15,8 @@ import {
   ArrowRightLeft,
   Wifi,
   WifiOff,
+  Clock,
+  Check,
 } from "lucide-react";
 import { Button } from "@/Components/ui/button";
 import { toast } from "react-hot-toast";
@@ -26,7 +28,9 @@ import {
   getLocalTodos,
   getCloudCachedTodos,
   saveCloudCachedTodos,
+  UnsyncedStatus,
 } from "@/utils/storage/offlineStorage";
+import { SyncState } from "./useAutoSync";
 
 interface DataModeSelectorProps {
   storageMode: StorageMode;
@@ -37,6 +41,11 @@ interface DataModeSelectorProps {
   userLoading?: boolean;
   onPushToCloud?: () => Promise<void>;
   onPullFromCloud?: () => void;
+  isAutoSyncEnabled?: boolean;
+  onToggleAutoSync?: (enabled: boolean) => void;
+  syncState?: SyncState;
+  unsyncedStatus?: UnsyncedStatus;
+  triggerSyncNow?: () => Promise<void>;
 }
 
 export const DataModeSelector: React.FC<DataModeSelectorProps> = ({
@@ -48,9 +57,14 @@ export const DataModeSelector: React.FC<DataModeSelectorProps> = ({
   userLoading = false,
   onPushToCloud,
   onPullFromCloud,
+  isAutoSyncEnabled = true,
+  onToggleAutoSync,
+  syncState = "idle",
+  unsyncedStatus = { hasUnsyncedChanges: false, lastSyncedAt: null },
+  triggerSyncNow,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [isSyncing, setIsSyncing] = useState(false);
+  const [isManualSyncing, setIsManualSyncing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -73,6 +87,19 @@ export const DataModeSelector: React.FC<DataModeSelectorProps> = ({
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [isOpen]);
+
+  // Format relative last synced time
+  const formatLastSynced = (timestamp: number | null): string => {
+    if (!timestamp) return "Not synced yet";
+    const diffSec = Math.floor((Date.now() - timestamp) / 1000);
+    if (diffSec < 30) return "Just now";
+    if (diffSec < 60) return `${diffSec}s ago`;
+    const diffMin = Math.floor(diffSec / 60);
+    if (diffMin < 60) return `${diffMin}m ago`;
+    const diffHour = Math.floor(diffMin / 60);
+    if (diffHour < 24) return `${diffHour}h ago`;
+    return new Date(timestamp).toLocaleDateString();
+  };
 
   // Handle Export Backup
   const handleExport = () => {
@@ -159,13 +186,14 @@ export const DataModeSelector: React.FC<DataModeSelectorProps> = ({
       toast.error("Please login to push data to MongoDB cloud.");
       return;
     }
-    setIsSyncing(true);
+    setIsManualSyncing(true);
     const toastId = toast.loading("Pushing tasks to cloud database...");
     try {
       if (onPushToCloud) {
         await onPushToCloud();
+      } else if (triggerSyncNow) {
+        await triggerSyncNow();
       } else {
-        // Fallback: save to cloud cache
         saveCloudCachedTodos(email, todos);
       }
       toast.success("All tasks pushed to cloud successfully! ☁️", { id: toastId });
@@ -173,7 +201,7 @@ export const DataModeSelector: React.FC<DataModeSelectorProps> = ({
     } catch (err: any) {
       toast.error("Failed to push tasks to cloud.", { id: toastId });
     } finally {
-      setIsSyncing(false);
+      setIsManualSyncing(false);
     }
   };
 
@@ -217,7 +245,19 @@ export const DataModeSelector: React.FC<DataModeSelectorProps> = ({
             <HardDrive className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400 flex-shrink-0" />
             <span className="hidden xs:inline">Local Mode</span>
             <span className="xs:hidden">Local</span>
-            <span className="w-1.5 h-1.5 rounded-full bg-purple-500" title="100% Offline Storage Active" />
+
+            {/* Live Local Sync State Dot */}
+            {syncState === "syncing" ? (
+              <span title="Auto-syncing to cloud..." className="inline-flex">
+                <RefreshCw className="w-3 h-3 text-purple-600 dark:text-purple-400 animate-spin flex-shrink-0" />
+              </span>
+            ) : syncState === "offline" ? (
+              <span className="w-1.5 h-1.5 rounded-full bg-rose-500" title="Offline (will sync when online)" />
+            ) : unsyncedStatus.hasUnsyncedChanges ? (
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" title="Unsynced local changes (auto-sync pending)" />
+            ) : (
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" title="Local data auto-synced to cloud" />
+            )}
           </>
         )}
         <ChevronDown
@@ -229,7 +269,7 @@ export const DataModeSelector: React.FC<DataModeSelectorProps> = ({
 
       {/* Dropdown Menu */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-72 sm:w-80 rounded-2xl bg-white dark:bg-gray-800 shadow-2xl border border-gray-200/80 dark:border-gray-700/80 p-3 z-50 animate-in fade-in-0 zoom-in-95 duration-150">
+        <div className="absolute right-0 mt-2 w-72 sm:w-84 rounded-2xl bg-white dark:bg-gray-800 shadow-2xl border border-gray-200/80 dark:border-gray-700/80 p-3 z-50 animate-in fade-in-0 zoom-in-95 duration-150">
           {/* Header */}
           <div className="flex items-center justify-between pb-2 mb-2 border-b border-gray-100 dark:border-gray-700/60">
             <div className="flex items-center gap-1.5">
@@ -244,7 +284,7 @@ export const DataModeSelector: React.FC<DataModeSelectorProps> = ({
           </div>
 
           {/* Mode Switch Cards */}
-          <div className="space-y-1.5 mb-3">
+          <div className="space-y-1.5 mb-2.5">
             {/* Cloud Sync Option */}
             <button
               type="button"
@@ -324,6 +364,58 @@ export const DataModeSelector: React.FC<DataModeSelectorProps> = ({
             </button>
           </div>
 
+          {/* Background Auto-Sync Setting Banner (when in Local Mode) */}
+          {storageMode === "local" && (
+            <div className="mb-2.5 p-2.5 rounded-xl bg-purple-500/5 dark:bg-purple-500/10 border border-purple-500/20">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5">
+                  <RefreshCw className={`w-3.5 h-3.5 text-purple-600 dark:text-purple-400 ${syncState === "syncing" ? "animate-spin" : ""}`} />
+                  <span className="text-xs font-semibold text-gray-800 dark:text-gray-200">
+                    Background Auto-Sync
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => onToggleAutoSync && onToggleAutoSync(!isAutoSyncEnabled)}
+                  className={`w-9 h-5 flex items-center rounded-full p-0.5 transition-colors cursor-pointer ${
+                    isAutoSyncEnabled
+                      ? "bg-purple-600"
+                      : "bg-gray-300 dark:bg-gray-600"
+                  }`}
+                  title={isAutoSyncEnabled ? "Disable background auto-sync" : "Enable background auto-sync"}
+                >
+                  <div
+                    className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform ${
+                      isAutoSyncEnabled ? "translate-x-4" : "translate-x-0"
+                    }`}
+                  />
+                </button>
+              </div>
+
+              {/* Status Note */}
+              <div className="mt-1.5 flex items-center justify-between text-[10px] text-gray-500 dark:text-gray-400">
+                <span>
+                  {syncState === "syncing"
+                    ? "Syncing to cloud..."
+                    : syncState === "offline"
+                    ? "Offline (paused)"
+                    : unsyncedStatus.hasUnsyncedChanges
+                    ? "Changes pending (syncing in 30s)"
+                    : `Last synced: ${formatLastSynced(unsyncedStatus.lastSyncedAt)}`}
+                </span>
+                {unsyncedStatus.hasUnsyncedChanges && (
+                  <button
+                    type="button"
+                    onClick={handlePush}
+                    className="text-purple-600 dark:text-purple-400 font-bold hover:underline"
+                  >
+                    Sync now
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Sync & Backup Actions Section */}
           <div className="pt-2 border-t border-gray-100 dark:border-gray-700/60 space-y-1.5">
             <span className="text-[10px] uppercase font-bold tracking-wider text-gray-400 dark:text-gray-500 px-1">
@@ -346,12 +438,14 @@ export const DataModeSelector: React.FC<DataModeSelectorProps> = ({
               <button
                 type="button"
                 onClick={handlePush}
-                disabled={isSyncing}
+                disabled={isManualSyncing || syncState === "syncing"}
                 className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-gray-100 hover:bg-gray-200 dark:bg-gray-700/70 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 text-xs font-medium transition-colors disabled:opacity-50"
                 title="Sync local data to cloud MongoDB"
               >
                 <Upload className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 flex-shrink-0" />
-                <span className="truncate">{isSyncing ? "Pushing..." : "Push Cloud"}</span>
+                <span className="truncate">
+                  {isManualSyncing || syncState === "syncing" ? "Syncing..." : "Push Cloud"}
+                </span>
               </button>
 
               {/* Export JSON */}
