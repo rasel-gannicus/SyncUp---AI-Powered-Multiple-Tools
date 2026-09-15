@@ -50,6 +50,16 @@ import { BulkActionBar } from "./BulkActions/BulkActionBar";
 import { TaskAttachment, compressImageFile } from "./Attachments/imageUtils";
 import { AttachmentPreviewStrip } from "./Attachments/AttachmentPreviewStrip";
 import { AttachmentViewerModal } from "./Attachments/AttachmentViewerModal";
+import {
+  StorageMode,
+  getStorageMode,
+  setStorageMode,
+  getLocalTodos,
+  saveLocalTodos,
+  getCloudCachedTodos,
+  saveCloudCachedTodos,
+} from "@/utils/storage/offlineStorage";
+import { DataModeSelector } from "./DataMode/DataModeSelector";
 
 export const PRIORITY_CONFIG: Record<
   PriorityLevel,
@@ -141,11 +151,67 @@ export const TodoList = ({ user }: { user: any }) => {
   const userState = useAppSelector((state) => state.user);
   const userData = userState.user;
   const userLoading = userState.userLoading;
-  const [todos, setTodos] = useState(userData?.todos || []);
 
+  const userEmail = user?.providerData?.[0]?.email || user?.email || "offline_user";
+  const [storageMode, setStorageModeState] = useState<StorageMode>(() =>
+    getStorageMode(userEmail)
+  );
+
+  // Initialize todos immediately with cached/local data to eliminate 0-count cold-start glitches
+  const [todos, setTodos] = useState<any[]>(() => {
+    if (typeof window === "undefined") return userData?.todos || [];
+    const mode = getStorageMode(userEmail);
+    if (mode === "local") {
+      return getLocalTodos(userEmail);
+    }
+    return userData?.todos || getCloudCachedTodos(userEmail) || [];
+  });
+
+  // Sync state when userData arrives or storageMode changes
   useEffect(() => {
-    setTodos(userData?.todos || []);
-  }, [userData]);
+    const currentMode = getStorageMode(userEmail);
+    setStorageModeState(currentMode);
+    if (currentMode === "local") {
+      const localTodos = getLocalTodos(userEmail);
+      setTodos(localTodos);
+    } else {
+      if (userData?.todos) {
+        setTodos(userData.todos);
+        saveCloudCachedTodos(userEmail, userData.todos);
+      } else {
+        const cached = getCloudCachedTodos(userEmail);
+        if (cached && cached.length > 0) {
+          setTodos(cached);
+        }
+      }
+    }
+  }, [userData, userEmail]);
+
+  // Handle switching between Cloud and Local storage modes
+  const handleModeChange = (newMode: StorageMode) => {
+    setStorageMode(userEmail, newMode);
+    setStorageModeState(newMode);
+
+    if (newMode === "local") {
+      let localTodos = getLocalTodos(userEmail);
+      // If local is currently empty but we have cloud tasks, auto-migrate to avoid blank screen
+      if (localTodos.length === 0 && todos.length > 0) {
+        saveLocalTodos(userEmail, todos);
+        localTodos = todos;
+      }
+      setTodos(localTodos);
+      toast.success("Switched to Local Offline Mode 💾");
+    } else {
+      // Cloud Mode
+      if (userData?.todos) {
+        setTodos(userData.todos);
+      } else {
+        const cached = getCloudCachedTodos(userEmail);
+        setTodos(cached);
+      }
+      toast.success("Switched to Cloud Sync Mode ☁️");
+    }
+  };
 
   // Extract all unique project names from active todos
   const availableProjects = useMemo(() => {
@@ -184,6 +250,7 @@ export const TodoList = ({ user }: { user: any }) => {
     completed: inputStatus === "Completed",
     attachments: inputAttachments,
     setAttachments: setInputAttachments,
+    storageMode,
   });
 
   // Helper to extract yyyy-MM-dd date key for internal filtering
@@ -298,23 +365,34 @@ export const TodoList = ({ user }: { user: any }) => {
 
   // Handle toggling todo completion
   const handleToggleTodo = async (createdAt: string, isCompleted: boolean) => {
-    if (!user) {
-      toast.error("You need to login first to toggle todos.");
-      return;
-    }
-
     const todoIndex = todos.findIndex(
       (todo: any) => todo.createdAt === createdAt
     );
     if (todoIndex === -1) return;
 
     const updatedTodo = { ...todos[todoIndex], completed: !isCompleted };
-    const toastId = toast.loading("Updating todo...");
-
-    // Optimistic update
     const updatedTodos = [...todos];
     updatedTodos[todoIndex] = updatedTodo;
+
+    // LOCAL MODE: Save to localStorage immediately
+    if (storageMode === "local") {
+      setTodos(updatedTodos);
+      saveLocalTodos(userEmail, updatedTodos);
+      toast.success(
+        !isCompleted ? "Task completed! 🎉" : "Task marked pending."
+      );
+      return;
+    }
+
+    // CLOUD MODE: Check login and call API
+    if (!user) {
+      toast.error("You need to login first to toggle cloud todos.");
+      return;
+    }
+
+    const toastId = toast.loading("Updating todo...");
     setTodos(updatedTodos);
+    saveCloudCachedTodos(userEmail, updatedTodos);
 
     try {
       const response: any = await editTodo({
@@ -330,6 +408,7 @@ export const TodoList = ({ user }: { user: any }) => {
         const revertedTodos = [...todos];
         revertedTodos[todoIndex].completed = isCompleted;
         setTodos(revertedTodos);
+        saveCloudCachedTodos(userEmail, revertedTodos);
       } else {
         toast.success(
           !isCompleted ? "Task completed! 🎉" : "Task marked pending."
@@ -340,6 +419,7 @@ export const TodoList = ({ user }: { user: any }) => {
       const revertedTodos = [...todos];
       revertedTodos[todoIndex].completed = isCompleted;
       setTodos(revertedTodos);
+      saveCloudCachedTodos(userEmail, revertedTodos);
     } finally {
       toast.dismiss(toastId);
     }
@@ -347,11 +427,6 @@ export const TodoList = ({ user }: { user: any }) => {
 
   // Handle changing priority on the fly
   const handleChangePriority = async (createdAt: string, newPriority: PriorityLevel) => {
-    if (!user) {
-      toast.error("You need to login first to change priority.");
-      return;
-    }
-
     const todoIndex = todos.findIndex(
       (todo: any) => todo.createdAt === createdAt
     );
@@ -361,11 +436,25 @@ export const TodoList = ({ user }: { user: any }) => {
     if (oldPriority === newPriority) return;
 
     const updatedTodo = { ...todos[todoIndex], priority: newPriority };
-
-    // Optimistic update
     const updatedTodos = [...todos];
     updatedTodos[todoIndex] = updatedTodo;
+
+    // LOCAL MODE: Save directly to localStorage
+    if (storageMode === "local") {
+      setTodos(updatedTodos);
+      saveLocalTodos(userEmail, updatedTodos);
+      toast.success(`Priority updated to ${newPriority}`);
+      return;
+    }
+
+    // CLOUD MODE:
+    if (!user) {
+      toast.error("You need to login first to change priority.");
+      return;
+    }
+
     setTodos(updatedTodos);
+    saveCloudCachedTodos(userEmail, updatedTodos);
 
     try {
       const response: any = await editTodo({
@@ -381,6 +470,7 @@ export const TodoList = ({ user }: { user: any }) => {
         const revertedTodos = [...todos];
         revertedTodos[todoIndex].priority = oldPriority;
         setTodos(revertedTodos);
+        saveCloudCachedTodos(userEmail, revertedTodos);
       } else {
         toast.success(`Priority updated to ${newPriority}`);
       }
@@ -389,28 +479,37 @@ export const TodoList = ({ user }: { user: any }) => {
       const revertedTodos = [...todos];
       revertedTodos[todoIndex].priority = oldPriority;
       setTodos(revertedTodos);
+      saveCloudCachedTodos(userEmail, revertedTodos);
     }
   };
 
   // Handle deleting a todo
   const handleDeleteTodo = async (createdAt: string) => {
-    if (!user) {
-      toast.error("You need to login first to delete todos.");
-      return;
-    }
-
     const todoIndex = todos.findIndex(
       (todo: any) => todo.createdAt === createdAt
     );
     if (todoIndex === -1) return;
 
     const todoToDelete = todos[todoIndex];
-    const toastId = toast.loading("Deleting todo...");
+    const updatedTodos = todos.filter((todo: any) => todo.createdAt !== createdAt);
 
-    // Optimistic delete
-    setTodos((prevTodos: any) =>
-      prevTodos.filter((todo: any) => todo.createdAt !== createdAt)
-    );
+    // LOCAL MODE: Save directly to localStorage
+    if (storageMode === "local") {
+      setTodos(updatedTodos);
+      saveLocalTodos(userEmail, updatedTodos);
+      toast.success("Todo deleted locally.");
+      return;
+    }
+
+    // CLOUD MODE:
+    if (!user) {
+      toast.error("You need to login first to delete todos.");
+      return;
+    }
+
+    const toastId = toast.loading("Deleting todo...");
+    setTodos(updatedTodos);
+    saveCloudCachedTodos(userEmail, updatedTodos);
 
     try {
       const response: any = await deleteTodo({
@@ -421,12 +520,14 @@ export const TodoList = ({ user }: { user: any }) => {
       if ("error" in response) {
         toast.error(response.error.data?.message || "Failed to delete todo.");
         setTodos((prevTodos: any) => [...prevTodos, todoToDelete]);
+        saveCloudCachedTodos(userEmail, [...updatedTodos, todoToDelete]);
       } else {
         toast.success("Todo deleted successfully.");
       }
     } catch {
       toast.error("An unexpected error occurred while deleting the todo.");
       setTodos((prevTodos: any) => [...prevTodos, todoToDelete]);
+      saveCloudCachedTodos(userEmail, [...updatedTodos, todoToDelete]);
     } finally {
       toast.dismiss(toastId);
     }
@@ -516,11 +617,6 @@ export const TodoList = ({ user }: { user: any }) => {
 
   // Finish editing todo
   const handleFinishEditing = async (createdAt: string) => {
-    if (!user) {
-      toast.error("You need to login first to edit todos.");
-      return;
-    }
-
     if (!editingText.trim()) {
       toast.error("Task text cannot be empty.");
       return;
@@ -553,12 +649,28 @@ export const TodoList = ({ user }: { user: any }) => {
       project: editingProject.trim(),
       attachments: editingAttachments,
     };
-    const toastId = toast.loading("Saving changes...");
 
-    // Optimistic update
     const updatedTodos = [...todos];
     updatedTodos[todoIndex] = updatedTodo;
+
+    // LOCAL MODE: Save directly to localStorage
+    if (storageMode === "local") {
+      setTodos(updatedTodos);
+      saveLocalTodos(userEmail, updatedTodos);
+      setEditingId(null);
+      toast.success("Todo updated locally. 💾");
+      return;
+    }
+
+    // CLOUD MODE:
+    if (!user) {
+      toast.error("You need to login first to edit todos.");
+      return;
+    }
+
+    const toastId = toast.loading("Saving changes...");
     setTodos(updatedTodos);
+    saveCloudCachedTodos(userEmail, updatedTodos);
     setEditingId(null);
 
     try {
@@ -581,6 +693,7 @@ export const TodoList = ({ user }: { user: any }) => {
         revertedTodos[todoIndex].project = oldProject;
         revertedTodos[todoIndex].attachments = oldAttachments;
         setTodos(revertedTodos);
+        saveCloudCachedTodos(userEmail, revertedTodos);
       } else {
         toast.success("Todo updated successfully.");
       }
@@ -592,6 +705,7 @@ export const TodoList = ({ user }: { user: any }) => {
       revertedTodos[todoIndex].project = oldProject;
       revertedTodos[todoIndex].attachments = oldAttachments;
       setTodos(revertedTodos);
+      saveCloudCachedTodos(userEmail, revertedTodos);
     } finally {
       toast.dismiss(toastId);
     }
@@ -739,17 +853,30 @@ export const TodoList = ({ user }: { user: any }) => {
 
   // Bulk Delete Handler
   const handleBulkDelete = async () => {
-    if (selectedTodoIds.length === 0 || !user?.email) return;
+    if (selectedTodoIds.length === 0) return;
 
     const count = selectedTodoIds.length;
     const idsToDelete = [...selectedTodoIds];
-    const userEmail = user.providerData?.[0]?.email || user?.email;
-
-    // Optimistic local state update
     const previousTodos = [...todos];
-    setTodos((prev: any[]) =>
-      prev.filter((t: any) => !idsToDelete.includes(t.createdAt))
-    );
+    const updatedTodos = todos.filter((t: any) => !idsToDelete.includes(t.createdAt));
+
+    // LOCAL MODE: Save directly to localStorage
+    if (storageMode === "local") {
+      setTodos(updatedTodos);
+      saveLocalTodos(userEmail, updatedTodos);
+      setSelectedTodoIds([]);
+      toast.success(`Deleted ${count} task${count > 1 ? "s" : ""}! 🗑️`);
+      return;
+    }
+
+    // CLOUD MODE:
+    if (!user?.email) {
+      toast.error("You need to login first to delete cloud tasks.");
+      return;
+    }
+
+    setTodos(updatedTodos);
+    saveCloudCachedTodos(userEmail, updatedTodos);
     setSelectedTodoIds([]);
 
     const toastId = toast.loading(
@@ -776,25 +903,42 @@ export const TodoList = ({ user }: { user: any }) => {
     } catch (err) {
       console.error("Error in bulk delete:", err);
       setTodos(previousTodos);
+      saveCloudCachedTodos(userEmail, previousTodos);
       toast.error("Failed to delete selected tasks.", { id: toastId });
     }
   };
 
   // Bulk Complete / Incomplete Handler
   const handleBulkToggleComplete = async (completed: boolean) => {
-    if (selectedTodoIds.length === 0 || !user?.email) return;
+    if (selectedTodoIds.length === 0) return;
 
     const count = selectedTodoIds.length;
     const idsToUpdate = [...selectedTodoIds];
-    const userEmail = user.providerData?.[0]?.email || user?.email;
-
-    // Optimistic local state update
     const previousTodos = [...todos];
-    setTodos((prev: any[]) =>
-      prev.map((t: any) =>
-        idsToUpdate.includes(t.createdAt) ? { ...t, completed } : t
-      )
+    const updatedTodos = todos.map((t: any) =>
+      idsToUpdate.includes(t.createdAt) ? { ...t, completed } : t
     );
+
+    // LOCAL MODE: Save directly to localStorage
+    if (storageMode === "local") {
+      setTodos(updatedTodos);
+      saveLocalTodos(userEmail, updatedTodos);
+      toast.success(
+        `Marked ${count} task${count > 1 ? "s" : ""} as ${
+          completed ? "done" : "active"
+        }! ✨`
+      );
+      return;
+    }
+
+    // CLOUD MODE:
+    if (!user?.email) {
+      toast.error("You need to login first to update cloud tasks.");
+      return;
+    }
+
+    setTodos(updatedTodos);
+    saveCloudCachedTodos(userEmail, updatedTodos);
 
     const toastId = toast.loading(
       `Marking ${count} task${count > 1 ? "s" : ""} as ${
@@ -830,6 +974,7 @@ export const TodoList = ({ user }: { user: any }) => {
     } catch (err) {
       console.error("Error in bulk update:", err);
       setTodos(previousTodos);
+      saveCloudCachedTodos(userEmail, previousTodos);
       toast.error("Failed to update selected tasks.", { id: toastId });
     }
   };
@@ -928,16 +1073,16 @@ export const TodoList = ({ user }: { user: any }) => {
               </p>
             </div>
 
-            {/* Actions: Daily Report + Monthly Report + View Mode Switcher */}
+            {/* Actions: Daily Report + Monthly Report + Custom Date + Data Mode + View Mode Switcher */}
             <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full sm:w-auto min-w-0">
-              <div className="grid grid-cols-3 sm:flex items-center gap-1.5 w-full sm:w-auto min-w-0">
+              <div className="flex flex-wrap items-center gap-1.5 w-full sm:w-auto min-w-0">
                 <Button
                   type="button"
                   onClick={() => {
                     setReportInitialTab("daily");
                     setIsReportModalOpen(true);
                   }}
-                  className="bg-gradient-to-r from-teal-500 to-emerald-600 dark:from-orange-400 dark:to-amber-500 hover:opacity-90 text-white dark:text-gray-950 px-1.5 sm:px-3 py-1.5 h-8 rounded-xl text-xs font-bold shadow-sm flex items-center justify-center gap-1 sm:gap-1.5 transition-all active:scale-95 min-w-0"
+                  className="bg-gradient-to-r from-teal-500 to-emerald-600 dark:from-orange-400 dark:to-amber-500 hover:opacity-90 text-white dark:text-gray-950 px-1.5 sm:px-3 py-1.5 h-8 rounded-xl text-xs font-bold shadow-sm flex items-center justify-center gap-1 sm:gap-1.5 transition-all active:scale-95 flex-1 sm:flex-initial min-w-0"
                   title="Create and copy daily report"
                 >
                   <FileText className="w-3.5 h-3.5 flex-shrink-0" />
@@ -950,7 +1095,7 @@ export const TodoList = ({ user }: { user: any }) => {
                     setReportInitialTab("monthly");
                     setIsReportModalOpen(true);
                   }}
-                  className="bg-gradient-to-r from-indigo-500 to-blue-600 dark:from-amber-400 dark:to-orange-500 hover:opacity-90 text-white dark:text-gray-950 px-1.5 sm:px-3 py-1.5 h-8 rounded-xl text-xs font-bold shadow-sm flex items-center justify-center gap-1 sm:gap-1.5 transition-all active:scale-95 min-w-0"
+                  className="bg-gradient-to-r from-indigo-500 to-blue-600 dark:from-amber-400 dark:to-orange-500 hover:opacity-90 text-white dark:text-gray-950 px-1.5 sm:px-3 py-1.5 h-8 rounded-xl text-xs font-bold shadow-sm flex items-center justify-center gap-1 sm:gap-1.5 transition-all active:scale-95 flex-1 sm:flex-initial min-w-0"
                   title="Create and copy monthly report"
                 >
                   <CalendarDays className="w-3.5 h-3.5 flex-shrink-0" />
@@ -963,12 +1108,22 @@ export const TodoList = ({ user }: { user: any }) => {
                     setReportInitialTab("custom");
                     setIsReportModalOpen(true);
                   }}
-                  className="bg-gradient-to-r from-purple-500 to-violet-600 dark:from-violet-400 dark:to-purple-500 hover:opacity-90 text-white dark:text-gray-950 px-1.5 sm:px-3 py-1.5 h-8 rounded-xl text-xs font-bold shadow-sm flex items-center justify-center gap-1 sm:gap-1.5 transition-all active:scale-95 min-w-0"
+                  className="bg-gradient-to-r from-purple-500 to-violet-600 dark:from-violet-400 dark:to-purple-500 hover:opacity-90 text-white dark:text-gray-950 px-1.5 sm:px-3 py-1.5 h-8 rounded-xl text-xs font-bold shadow-sm flex items-center justify-center gap-1 sm:gap-1.5 transition-all active:scale-95 flex-1 sm:flex-initial min-w-0"
                   title="Create report for custom dates"
                 >
                   <CalendarIcon className="w-3.5 h-3.5 flex-shrink-0" />
                   <span className="truncate text-[10px] sm:text-xs">Custom Date</span>
                 </Button>
+
+                {/* Data Storage Mode Selector (Cloud vs Local Storage) */}
+                <DataModeSelector
+                  storageMode={storageMode}
+                  onModeChange={handleModeChange}
+                  user={user}
+                  todos={todos}
+                  setTodos={setTodos}
+                  userLoading={userLoading}
+                />
               </div>
 
               {/* View Mode Switcher: Selected Date vs All Tasks */}
@@ -2011,6 +2166,7 @@ export const TodoList = ({ user }: { user: any }) => {
         setTodos={setTodos}
         selectedProjectFilter={selectedProjectFilter}
         setSelectedProjectFilter={setSelectedProjectFilter}
+        storageMode={storageMode}
       />
 
       {/* Daily & Monthly Report Generator Modal */}

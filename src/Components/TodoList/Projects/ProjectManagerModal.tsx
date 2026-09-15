@@ -19,6 +19,12 @@ import {
   useDeleteProjectMutation,
 } from "@/Redux/features/Todo List/todoApi";
 
+import {
+  StorageMode,
+  saveLocalTodos,
+  saveCloudCachedTodos,
+} from "@/utils/storage/offlineStorage";
+
 interface ProjectManagerModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -28,6 +34,7 @@ interface ProjectManagerModalProps {
   setTodos: React.Dispatch<React.SetStateAction<any[]>>;
   selectedProjectFilter: string;
   setSelectedProjectFilter: React.Dispatch<React.SetStateAction<string>>;
+  storageMode?: StorageMode;
 }
 
 export const ProjectManagerModal = ({
@@ -39,6 +46,7 @@ export const ProjectManagerModal = ({
   setTodos,
   selectedProjectFilter,
   setSelectedProjectFilter,
+  storageMode = "cloud",
 }: ProjectManagerModalProps) => {
   const [editingProj, setEditingProj] = useState<string | null>(null);
   const [renameInput, setRenameInput] = useState("");
@@ -50,7 +58,7 @@ export const ProjectManagerModal = ({
 
   if (!isOpen) return null;
 
-  const email = user?.providerData?.[0]?.email || user?.email;
+  const email = user?.providerData?.[0]?.email || user?.email || "offline_user";
 
   // Handle renaming a project
   const handleRename = async (oldName: string) => {
@@ -80,10 +88,20 @@ export const ProjectManagerModal = ({
     }
 
     setEditingProj(null);
+
+    // If local mode, persist to localStorage immediately
+    if (storageMode === "local") {
+      saveLocalTodos(email, updated);
+      toast.success(`Project renamed to "${newName}" 🎉`);
+      return;
+    }
+
+    // Cloud mode
+    saveCloudCachedTodos(email, updated);
     const toastId = toast.loading(`Renaming "${oldName}" to "${newName}"...`);
 
     try {
-      if (email) {
+      if (email && user) {
         await renameProjectApi({
           email,
           oldProjectName: oldName,
@@ -94,6 +112,7 @@ export const ProjectManagerModal = ({
     } catch (err: any) {
       toast.error(err?.data?.message || "Failed to rename project.");
       setTodos(previousTodos);
+      saveCloudCachedTodos(email, previousTodos);
       if (selectedProjectFilter.toLowerCase() === newName.toLowerCase()) {
         setSelectedProjectFilter(oldName);
       }
@@ -123,10 +142,20 @@ export const ProjectManagerModal = ({
     }
 
     setDeletingProj(null);
+
+    // If local mode, persist to localStorage immediately
+    if (storageMode === "local") {
+      saveLocalTodos(email, updated);
+      toast.success(`Project "${projectName}" removed from tasks.`);
+      return;
+    }
+
+    // Cloud mode
+    saveCloudCachedTodos(email, updated);
     const toastId = toast.loading(`Removing project "${projectName}"...`);
 
     try {
-      if (email) {
+      if (email && user) {
         await deleteProjectApi({
           email,
           projectName,
@@ -136,6 +165,7 @@ export const ProjectManagerModal = ({
     } catch (err: any) {
       toast.error(err?.data?.message || "Failed to delete project.");
       setTodos(previousTodos);
+      saveCloudCachedTodos(email, previousTodos);
       if (selectedProjectFilter === "all") {
         setSelectedProjectFilter(projectName);
       }
