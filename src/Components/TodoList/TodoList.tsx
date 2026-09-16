@@ -105,6 +105,44 @@ export const normalizePriority = (priority: any): PriorityLevel => {
   return "Medium";
 };
 
+// Helper to extract yyyy-MM-dd date key for internal filtering & editing
+export const getTodoDateKey = (todo: any): string => {
+  if (todo?.date) {
+    return typeof todo.date === "string"
+      ? todo.date.substring(0, 10)
+      : format(new Date(todo.date), "yyyy-MM-dd");
+  }
+  if (todo?.createdAt) {
+    try {
+      const d = new Date(Number(todo.createdAt) || todo.createdAt);
+      if (!isNaN(d.getTime())) {
+        return format(d, "yyyy-MM-dd");
+      }
+    } catch {
+      return format(new Date(), "yyyy-MM-dd");
+    }
+  }
+  return format(new Date(), "yyyy-MM-dd");
+};
+
+// Helper to format date for display in date-month-year format (dd-MM-yyyy)
+export const formatDisplayDate = (dateVal: any): string => {
+  if (!dateVal) return "";
+  try {
+    if (typeof dateVal === "string" && /^\d{4}-\d{2}-\d{2}$/.test(dateVal)) {
+      const [year, month, day] = dateVal.split("-");
+      return `${day}-${month}-${year}`;
+    }
+    const d = new Date(Number(dateVal) || dateVal);
+    if (!isNaN(d.getTime())) {
+      return format(d, "dd-MM-yyyy");
+    }
+  } catch {
+    // fallback
+  }
+  return String(dateVal);
+};
+
 export type ActiveEntityFilter =
   | "total"
   | "pending"
@@ -131,6 +169,7 @@ export const TodoList = ({ user }: { user: any }) => {
   const [editingText, setEditingText] = useState("");
   const [editingPriority, setEditingPriority] = useState<PriorityLevel>("Medium");
   const [editingProject, setEditingProject] = useState("");
+  const [editingDate, setEditingDate] = useState("");
   const [inputAttachments, setInputAttachments] = useState<TaskAttachment[]>([]);
   const [editingAttachments, setEditingAttachments] = useState<TaskAttachment[]>([]);
   const [isProcessingImages, setIsProcessingImages] = useState(false);
@@ -267,43 +306,6 @@ export const TodoList = ({ user }: { user: any }) => {
     storageMode,
   });
 
-  // Helper to extract yyyy-MM-dd date key for internal filtering
-  const getTodoDateKey = useCallback((todo: any): string => {
-    if (todo?.date) {
-      return typeof todo.date === "string"
-        ? todo.date.substring(0, 10)
-        : format(new Date(todo.date), "yyyy-MM-dd");
-    }
-    if (todo?.createdAt) {
-      try {
-        const d = new Date(Number(todo.createdAt) || todo.createdAt);
-        if (!isNaN(d.getTime())) {
-          return format(d, "yyyy-MM-dd");
-        }
-      } catch {
-        return format(new Date(), "yyyy-MM-dd");
-      }
-    }
-    return format(new Date(), "yyyy-MM-dd");
-  }, []);
-
-  // Helper to format date for display in date-month-year format (dd-MM-yyyy)
-  const formatDisplayDate = useCallback((dateVal: any): string => {
-    if (!dateVal) return "";
-    try {
-      if (typeof dateVal === "string" && /^\d{4}-\d{2}-\d{2}$/.test(dateVal)) {
-        const [year, month, day] = dateVal.split("-");
-        return `${day}-${month}-${year}`;
-      }
-      const d = new Date(Number(dateVal) || dateVal);
-      if (!isNaN(d.getTime())) {
-        return format(d, "dd-MM-yyyy");
-      }
-    } catch {
-      // fallback
-    }
-    return String(dateVal);
-  }, []);
 
   const selectedDateKey = useMemo(
     () => format(selectedDate, "yyyy-MM-dd"),
@@ -618,6 +620,7 @@ export const TodoList = ({ user }: { user: any }) => {
     setEditingText(todo?.text || "");
     setEditingPriority(normalizePriority(todo?.priority));
     setEditingProject(todo?.project || "");
+    setEditingDate(getTodoDateKey(todo));
     setEditingAttachments(Array.isArray(todo?.attachments) ? todo.attachments : []);
   };
 
@@ -626,6 +629,7 @@ export const TodoList = ({ user }: { user: any }) => {
     setEditingId(null);
     setEditingText("");
     setEditingProject("");
+    setEditingDate("");
     setEditingAttachments([]);
   };
 
@@ -644,12 +648,15 @@ export const TodoList = ({ user }: { user: any }) => {
     const oldText = todos[todoIndex].text;
     const oldPriority = todos[todoIndex].priority || "Medium";
     const oldProject = todos[todoIndex].project || "";
+    const oldDate = getTodoDateKey(todos[todoIndex]);
     const oldAttachments = todos[todoIndex].attachments || [];
+    const newDate = editingDate || oldDate;
 
     if (
       oldText === editingText.trim() &&
       oldPriority === editingPriority &&
       oldProject === editingProject.trim() &&
+      oldDate === newDate &&
       JSON.stringify(oldAttachments) === JSON.stringify(editingAttachments)
     ) {
       setEditingId(null);
@@ -661,6 +668,7 @@ export const TodoList = ({ user }: { user: any }) => {
       text: editingText.trim(),
       priority: editingPriority,
       project: editingProject.trim(),
+      date: newDate,
       attachments: editingAttachments,
     };
 
@@ -694,6 +702,7 @@ export const TodoList = ({ user }: { user: any }) => {
           text: editingText.trim(),
           priority: editingPriority,
           project: editingProject.trim(),
+          date: newDate,
           attachments: editingAttachments,
           email: user.providerData[0]?.email || user?.email,
         },
@@ -705,6 +714,7 @@ export const TodoList = ({ user }: { user: any }) => {
         revertedTodos[todoIndex].text = oldText;
         revertedTodos[todoIndex].priority = oldPriority;
         revertedTodos[todoIndex].project = oldProject;
+        revertedTodos[todoIndex].date = oldDate;
         revertedTodos[todoIndex].attachments = oldAttachments;
         setTodos(revertedTodos);
         saveCloudCachedTodos(userEmail, revertedTodos);
@@ -717,6 +727,7 @@ export const TodoList = ({ user }: { user: any }) => {
       revertedTodos[todoIndex].text = oldText;
       revertedTodos[todoIndex].priority = oldPriority;
       revertedTodos[todoIndex].project = oldProject;
+      revertedTodos[todoIndex].date = oldDate;
       revertedTodos[todoIndex].attachments = oldAttachments;
       setTodos(revertedTodos);
       saveCloudCachedTodos(userEmail, revertedTodos);
@@ -1906,8 +1917,9 @@ export const TodoList = ({ user }: { user: any }) => {
                             <X className="w-4 h-4" />
                           </button>
                         </div>
-                        {/* Priority & Project Selector while editing */}
-                        <div className="flex flex-wrap items-center gap-3 pt-1">
+                        {/* Priority, Project & Date Selectors while editing */}
+                        <div className="flex flex-wrap items-center gap-2 sm:gap-3 pt-1">
+                          {/* Priority Selector */}
                           <div className="flex items-center gap-1.5">
                             <span className="text-[11px] font-medium text-gray-500">Priority:</span>
                             {priorityLevels.map((lvl) => {
@@ -1929,6 +1941,8 @@ export const TodoList = ({ user }: { user: any }) => {
                               );
                             })}
                           </div>
+
+                          {/* Project Selector */}
                           <ProjectAutocomplete
                             value={editingProject}
                             onChange={setEditingProject}
@@ -1938,6 +1952,47 @@ export const TodoList = ({ user }: { user: any }) => {
                             placeholder="Project (optional)"
                             inputClassName="h-7 w-36 dark:bg-gray-800"
                           />
+
+                          {/* Date Selector & Quick Presets */}
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-lg border border-gray-200 dark:border-gray-700">
+                              <CalendarIcon className="w-3.5 h-3.5 text-teal-600 dark:text-orange-400 flex-shrink-0" />
+                              <span className="text-[11px] font-medium text-gray-500">Date:</span>
+                              <input
+                                type="date"
+                                value={editingDate}
+                                onChange={(e) => setEditingDate(e.target.value)}
+                                className="bg-transparent text-xs text-gray-800 dark:text-gray-200 font-medium focus:outline-none cursor-pointer"
+                              />
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => setEditingDate(format(new Date(), "yyyy-MM-dd"))}
+                              className={`text-[10px] px-2 py-1 rounded-md border font-semibold transition-all ${
+                                editingDate === format(new Date(), "yyyy-MM-dd")
+                                  ? "bg-teal-500/20 text-teal-700 dark:text-orange-300 border-teal-500/40"
+                                  : "bg-gray-100 dark:bg-gray-800 text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-700 border-transparent"
+                              }`}
+                            >
+                              Today
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const tomorrow = new Date();
+                                tomorrow.setDate(tomorrow.getDate() + 1);
+                                setEditingDate(format(tomorrow, "yyyy-MM-dd"));
+                              }}
+                              className={`text-[10px] px-2 py-1 rounded-md border font-semibold transition-all ${
+                                editingDate ===
+                                format(new Date(Date.now() + 86400000), "yyyy-MM-dd")
+                                  ? "bg-teal-500/20 text-teal-700 dark:text-orange-300 border-teal-500/40"
+                                  : "bg-gray-100 dark:bg-gray-800 text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-700 border-transparent"
+                              }`}
+                            >
+                              Tomorrow
+                            </button>
+                          </div>
                         </div>
 
                         {/* Edit Mode Attachments */}
@@ -2038,13 +2093,16 @@ export const TodoList = ({ user }: { user: any }) => {
                               </button>
                             )}
 
-                            {/* Date badge formatted as date-month-year (dd-MM-yyyy) */}
-                            {(filterMode === "all" || todoDateStr !== selectedDateKey) && (
-                              <span className="text-[11px] text-teal-600 dark:text-orange-400 font-medium flex items-center gap-1">
-                                <CalendarIcon className="w-3 h-3" />
-                                {formatDisplayDate(todoDateStr)}
-                              </span>
-                            )}
+                            {/* Interactive Date badge formatted as dd-MM-yyyy - Click to edit */}
+                            <button
+                              type="button"
+                              onClick={() => handleStartEditing(todo)}
+                              title="Click to change task date or details"
+                              className="text-[11px] text-teal-600 dark:text-orange-400 hover:text-teal-700 dark:hover:text-orange-300 font-medium flex items-center gap-1 bg-teal-500/10 dark:bg-orange-500/10 hover:bg-teal-500/20 dark:hover:bg-orange-500/20 px-1.5 py-0.5 rounded-md border border-teal-500/20 dark:border-orange-500/20 transition-all hover:scale-105"
+                            >
+                              <CalendarIcon className="w-3 h-3 flex-shrink-0" />
+                              <span>{formatDisplayDate(todoDateStr)}</span>
+                            </button>
                           </div>
 
                           {/* Mobile Action buttons (Copy, Edit & Delete) */}
