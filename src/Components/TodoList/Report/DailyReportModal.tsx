@@ -41,6 +41,29 @@ interface DailyReportModalProps {
 }
 
 /**
+ * Converts the plain-text report into HTML for rich-text clipboard pasting
+ * (Gmail, Docs, WhatsApp Web, etc.). "Project : X" lines become bold.
+ */
+export const reportTextToHtml = (text: string): string => {
+  const escapeHtml = (str: string) =>
+    str
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+
+  return text
+    .split("\n")
+    .map((line) => {
+      if (!line.trim()) return "<div><br></div>";
+      const safe = escapeHtml(line);
+      return /^\s*Project\s*:/i.test(line)
+        ? `<div><b>${safe}</b></div>`
+        : `<div>${safe}</div>`;
+    })
+    .join("");
+};
+
+/**
  * Generates Daily Report Text matching the user's format:
  * Update {day-ordinal} {month}
  * Project : {project}
@@ -116,7 +139,7 @@ export const generateDailyReportText = ({
 
   // Tasks grouped under projects
   Object.keys(projectGroups).forEach((proj) => {
-    lines.push(`Project : ${proj}`);
+    lines.push("", `Project : ${proj}`);
     projectGroups[proj].forEach((t: any) => {
       let line = `• ${t.text}`;
       if (includeOngoingTag && !t.completed) {
@@ -129,7 +152,7 @@ export const generateDailyReportText = ({
   // Unassigned / General tasks
   if (noProjectTasks.length > 0) {
     if (Object.keys(projectGroups).length > 0) {
-      lines.push(`Project : General`);
+      lines.push("", `Project : General`);
     }
     noProjectTasks.forEach((t: any) => {
       let line = `• ${t.text}`;
@@ -224,13 +247,13 @@ export const generateMonthlyReportText = ({
     const projectCount =
       Object.keys(projectGroups).length + (noProjectTasks.length > 0 ? 1 : 0);
     lines.push(
-      `📊 Summary: ${filtered.length} Tasks (${completedCount} Completed, ${ongoingCount} Ongoing) across ${projectCount} Projects\n`
+      `📊 Summary: ${filtered.length} Tasks (${completedCount} Completed, ${ongoingCount} Ongoing) across ${projectCount} Projects`
     );
   }
 
   // Tasks grouped under projects
   Object.keys(projectGroups).forEach((proj) => {
-    lines.push(`Project : ${proj}`);
+    lines.push("", `Project : ${proj}`);
     projectGroups[proj].forEach((t: any) => {
       let line = "• ";
       if (includeDates) {
@@ -248,7 +271,7 @@ export const generateMonthlyReportText = ({
   // Unassigned / General tasks
   if (noProjectTasks.length > 0) {
     if (Object.keys(projectGroups).length > 0) {
-      lines.push(`Project : General`);
+      lines.push("", `Project : General`);
     }
     noProjectTasks.forEach((t: any) => {
       let line = "• ";
@@ -404,7 +427,7 @@ export const generateCustomDateReportText = ({
     const lines: string[] = [header];
 
     Object.keys(projectGroups).forEach((proj) => {
-      lines.push(`Project : ${proj}`);
+      lines.push("", `Project : ${proj}`);
       projectGroups[proj].forEach((t: any) => {
         let line = `• ${t.text}`;
         if (includeOngoingTag && !t.completed) {
@@ -416,7 +439,7 @@ export const generateCustomDateReportText = ({
 
     if (noProjectTasks.length > 0) {
       if (Object.keys(projectGroups).length > 0) {
-        lines.push(`Project : General`);
+        lines.push("", `Project : General`);
       }
       noProjectTasks.forEach((t: any) => {
         let line = `• ${t.text}`;
@@ -471,7 +494,7 @@ export const generateCustomDateReportText = ({
     const lines: string[] = [header];
 
     Object.keys(projectGroups).forEach((proj) => {
-      lines.push(`Project : ${proj}`);
+      lines.push("", `Project : ${proj}`);
       projectGroups[proj].forEach((t: any) => {
         let line = `• ${t.text}`;
         if (includeOngoingTag && !t.completed) {
@@ -483,7 +506,7 @@ export const generateCustomDateReportText = ({
 
     if (noProjectTasks.length > 0) {
       if (Object.keys(projectGroups).length > 0) {
-        lines.push(`Project : General`);
+        lines.push("", `Project : General`);
       }
       noProjectTasks.forEach((t: any) => {
         let line = `• ${t.text}`;
@@ -737,10 +760,22 @@ export const DailyReportModal = ({
   const weekDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
   // Handle Copy to clipboard
-  const handleCopy = () => {
+  const handleCopy = async () => {
     if (!reportText) return;
     try {
-      navigator.clipboard.writeText(reportText);
+      // Copy as rich text (bold project headings) with plain-text fallback
+      if (typeof ClipboardItem !== "undefined" && navigator.clipboard?.write) {
+        await navigator.clipboard.write([
+          new ClipboardItem({
+            "text/html": new Blob([reportTextToHtml(reportText)], {
+              type: "text/html",
+            }),
+            "text/plain": new Blob([reportText], { type: "text/plain" }),
+          }),
+        ]);
+      } else {
+        await navigator.clipboard.writeText(reportText);
+      }
       setCopied(true);
       toast.success(
         `${
